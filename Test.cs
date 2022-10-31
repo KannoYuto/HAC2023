@@ -32,7 +32,7 @@ public class Test : MonoBehaviour
             _dBs[i] = new SqliteDatabase("ainu_DB_" + $"{i}" + ".db");
         }
     }
-
+    #region 日本語からアイヌ語変換
     private void JapaneseSearch(string searchWord)
     {
         if (searchWord == "")
@@ -62,7 +62,9 @@ public class Test : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region アイヌ語から日本語変換
     private void AinuSearch(string searchWord)
     {
         if (searchWord == "")
@@ -92,18 +94,18 @@ public class Test : MonoBehaviour
             }
         }
     }
+    #endregion
 
-    private List<List<string>> MorphologicalAnalysis(string searchWord)
+    #region 形態素解析
+    private void MorphologicalAnalysis(string searchWord)
     {
         if (searchWord == "")
         {
             print("テキストを入力してください");
-            return new List<List<string>>();
+            return;
         }
 
         string dicDir = @"Assets/NMeCab-0.10.2/dic/ipadic";
-
-        List<List<string>> analysisWords = new List<List<string>>();
 
         using (MeCabIpaDicTagger tagger = MeCabIpaDicTagger.Create(dicDir))
         {
@@ -111,19 +113,13 @@ public class Test : MonoBehaviour
 
             foreach (MeCabIpaDicNode item in nodes)
             {
-                List<string> items = new List<string>();
-                items.Add($"{item.Surface}");
-                items.Add($"{item.PartsOfSpeech}");
-                items.Add($"{item.PartsOfSpeechSection1}");
-                items.Add($"{item.PartsOfSpeechSection2}");
-                analysisWords.Add(items);
-
                 Debug.Log($"{item.Surface}, {item.PartsOfSpeech}, {item.PartsOfSpeechSection1}, {item.PartsOfSpeechSection2}");
             }
         }
 
-        return analysisWords;
+        return;
     }
+    #endregion
 
     public void SearchStart_Japanese()
     {
