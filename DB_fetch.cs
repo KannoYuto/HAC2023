@@ -4,85 +4,45 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using NMeCab.Specialized;
 
 public class DB_fetch : MonoBehaviour
 {
     //データベース格納用
-    [SerializeField]
-    private SqliteDatabase[] _dBs = default;
+    private SqliteDatabase _dB = default;
 
-    [SerializeField, Header("データベースの個数")]
-    private int _dBNumber = default;
+    //○詞の数
+    private const int POS = 4;
 
-    [SerializeField, Header("検索するワード")]
-    private string _searchWord = default;
-
-    [SerializeField, Header("コンポーネント取得用")]
-    private InputField _iF = default;
+    //データテーブル格納用
+    private DataTable[] _dTs = new DataTable[POS];
 
     private void Awake()
     {
-        //配列の初期化
-        _dBs = new SqliteDatabase[_dBNumber];
+        //データベースを格納
+        _dB = new SqliteDatabase("ainu_DB_ALL.db");
 
-        /*
-         * 配列にデータベースを格納
-         */
-        for (int i = 0; i < _dBNumber; i++)
+        //それぞれのSQL文を実行した結果を配列に格納
+        for (int i = 0; i < POS; i++)
         {
-            _dBs[i] = new SqliteDatabase("ainu_DB_" + $"{i}" + ".db");
-        }
-    }
-
-    private void JapaneseSearch(string searchWord ,int lineX)
-    {
-        SqliteDatabase currentDB = _dBs[lineX];
-        DataTable query = currentDB.ExecuteQuery("SELECT Ainu,Japanese FROM Language");
-
-        foreach (DataRow row in query.Rows)
-        {
-            string ainu = $"{row["Ainu"]}";
-            string japanese = $"{row["Japanese"]}";
-            if (searchWord != "" && japanese.Contains(searchWord))
+            switch (i)
             {
-                print($"{ainu}" + " : " + $"{japanese}");
-            }
-            else
-            {
-                print("見つからなかった");
+                case 0:
+                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '％名詞'");
+                    break;
+
+                case 1:
+                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '％動詞'");
+                    break;
+
+                case 2:
+                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '副詞'");
+                    break;
+
+                case 3:
+                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS NOT LIKE '％名詞' AND PoS NOT LIKE '％動詞' AND PoS NOT LIKE '副詞'");
+                    break;
             }
         }
-    }
-
-    private void AinuSearch(string searchWord, int lineX)
-    {
-        SqliteDatabase currentDB = _dBs[lineX];
-        DataTable query = currentDB.ExecuteQuery("SELECT Ainu,Japanese FROM Language");
-
-        foreach (DataRow row in query.Rows)
-        {
-            string ainu = $"{row["Ainu"]}";
-            string japanese = $"{row["Japanese"]}";
-            if (searchWord != "" && ainu.Contains(searchWord))
-            {
-                print($"{ainu}" + " : " + $"{japanese}");
-            }
-            else
-            {
-                print("見つからなかった");
-            }
-        }
-    }
-
-    public void SearchStart_Japanese()
-    {
-        _searchWord = _iF.text;
-        JapaneseSearch(_searchWord, 0);
-    }
-
-    public void SearchStart_Ainu()
-    {
-        _searchWord = _iF.text;
-        AinuSearch(_searchWord, 0);
     }
 }
