@@ -38,22 +38,22 @@ public class DB_fetch : MonoBehaviour
                 {
                     case 0:
                         //～名詞のテーブルを格納
-                        _dTs[j, i] = _dBs[i].ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '％名詞'");
+                        _dTs[j, i] = _dBs[i].ExecuteQuery("SELECT * FROM Language WHERE PoS like '%名詞'");
                         break;
 
                     case 1:
                         //～動詞のテーブルを格納
-                        _dTs[j, i] = _dBs[i].ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '％動詞'");
+                        _dTs[j, i] = _dBs[i].ExecuteQuery("SELECT * FROM Language WHERE PoS like '%動詞'");
                         break;
 
                     case 2:
                         //～副詞のテーブルを格納
-                        _dTs[j, i] = _dBs[i].ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '％副詞'");
+                        _dTs[j, i] = _dBs[i].ExecuteQuery("SELECT * FROM Language WHERE PoS like '%副詞'");
                         break;
 
                     case 3:
                         //その他のテーブルを格納
-                        _dTs[j, i] = _dBs[i].ExecuteQuery("SELECT * FROM Language WHERE PoS NOT LIKE '％名詞' AND PoS NOT LIKE '％動詞' AND PoS NOT LIKE '副詞'");
+                        _dTs[j, i] = _dBs[i].ExecuteQuery("SELECT * FROM Language WHERE PoS NOT like '%名詞' AND PoS NOT like '%動詞' AND PoS NOT like '%副詞'");
                         break;
                 }
             }
