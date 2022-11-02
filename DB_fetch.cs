@@ -28,21 +28,30 @@ public class DB_fetch : MonoBehaviour
             switch (i)
             {
                 case 0:
-                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '％名詞'");
+                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%名詞';");
                     break;
 
                 case 1:
-                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '％動詞'");
+                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%動詞'");
                     break;
 
                 case 2:
-                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS LIKE '副詞'");
+                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%副詞'");
                     break;
 
                 case 3:
-                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS NOT LIKE '％名詞' AND PoS NOT LIKE '％動詞' AND PoS NOT LIKE '副詞'");
+                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS NOT like '%名詞' AND PoS NOT like '%動詞' AND PoS NOT like '%副詞'");
                     break;
             }
+        }
+
+        foreach (DataRow row in _dTs[2].Rows)
+        {
+            string ainu = $"{row["Ainu"]}";
+            string japanese = $"{row["Japanese"]}";
+            string pos = $"{row["PoS"]}";
+
+            print($"{ainu}" + " : " + $"{japanese}" + " [" + $"{pos}" + "]");
         }
     }
 }
