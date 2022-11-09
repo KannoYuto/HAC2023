@@ -7,6 +7,12 @@ using NMeCab.Specialized;
 
 public class DB_fetch : MonoBehaviour
 {
+    [SerializeField]
+    private Transform _poolObj = default;
+
+    [SerializeField]
+    private ObjectPool _pool = default;
+
     //データベース格納用変数
     private SqliteDatabase _dB = default;
 
@@ -21,10 +27,18 @@ public class DB_fetch : MonoBehaviour
     private InputField _iF = default;
 
     //モード選択用
+    private enum AnalysisMode
+    {
+        Search,
+        Translation
+    }
+    [SerializeField]
+    private AnalysisMode _analysisMode = default;
+
     private enum SearchMode
     {
-        Word,
-        Sentence
+        JapaneseToAinu,
+        AinuToJapanese
     }
     [SerializeField]
     private SearchMode _searchMode = default;
@@ -33,7 +47,7 @@ public class DB_fetch : MonoBehaviour
     private const string DIC_DIR = @"Assets/NMeCab-0.10.2/dic/ipadic";
 
     //形態素解析結果格納用クラス
-    public class Results
+    public class AnalysisResults
     {
         public string Surface { get; set; }
         public string PartsOfSpeech { get; set; }
@@ -42,15 +56,17 @@ public class DB_fetch : MonoBehaviour
     }
 
     //形態素解析結果格納用配列
-    private Results[] _results = default;
+    private AnalysisResults[] _analysisResults = default;
 
-    private List<List<string>> _translationResults = new List<List<string>>();
+    //検索結果格納用クラス
+    public class SearchResults
+    {
+        public string Ainu { get; set; }
+        public string Japanese { get; set; }
+    }
 
-    [SerializeField]
-    private int _index = default;
-
-    [SerializeField]
-    private List<string> _inList = new List<string>();
+    ////翻訳結果格納用二次元リスト
+    //private List<List<string>> _translationResults = new List<List<string>>();
 
     private void Awake()
     {
@@ -84,16 +100,8 @@ public class DB_fetch : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        if (_translationResults.Count != 0)
-        {
-            _inList = _translationResults[_index];
-        }
-    }
-
     #region 形態素解析
-    private List<Results> Analysis(string searchWord)
+    private List<AnalysisResults> Analysis(string searchWord)
     {
         //何も入力されていなかったら
         if (searchWord == "")
@@ -102,7 +110,7 @@ public class DB_fetch : MonoBehaviour
         }
 
         //解析結果格納用
-        List<Results> results = new List<Results>();
+        List<AnalysisResults> results = new List<AnalysisResults>();
 
         //形態素解析した要素をリストに格納
         using (MeCabIpaDicTagger tagger = MeCabIpaDicTagger.Create(DIC_DIR))
@@ -111,7 +119,7 @@ public class DB_fetch : MonoBehaviour
 
             foreach (MeCabIpaDicNode item in nodes)
             {
-                Results result = new Results();
+                AnalysisResults result = new AnalysisResults();
                 result.Surface = $"{item.Surface}";
                 result.PartsOfSpeech = $"{item.PartsOfSpeech}";
                 result.PartsOfSpeechSection1 = $"{item.PartsOfSpeechSection1}";
@@ -130,20 +138,28 @@ public class DB_fetch : MonoBehaviour
     #region 検索/翻訳開始ボタン
     public void StartSerch_OR_Analysis()
     {
-        switch (_searchMode)
+        foreach (Transform text in _poolObj)
         {
-            case SearchMode.Word:
+            if (text.gameObject.activeInHierarchy)
+            {
+                text.gameObject.SetActive(false);
+            }
+        }
+
+        switch (_analysisMode)
+        {
+            case AnalysisMode.Search:
 
                 Search(_iF.text);
 
                 break;
 
-            case SearchMode.Sentence:
+            case AnalysisMode.Translation:
 
                 if (Analysis(_iF.text) != null)
                 {
-                    _results = Analysis(_iF.text).ToArray();
-                    Translation(_results);
+                    _analysisResults = Analysis(_iF.text).ToArray();
+                    Translation(_analysisResults);
                 }
 
                 break;
@@ -160,26 +176,103 @@ public class DB_fetch : MonoBehaviour
             return;
         }
 
+        DataTable query = _dB.ExecuteQuery("SELECT Ainu,Japanese FROM Language");
 
+        List<SearchResults> similaritySearchResults = new List<SearchResults>();
+
+        foreach (DataRow row in query.Rows)
+        {
+            string ainu = $"{row["Ainu"]}";
+            string japanese = $"{row["Japanese"]}";
+
+            SearchResults searchResult = new SearchResults();
+
+            switch (_searchMode)
+            {
+                case SearchMode.JapaneseToAinu:
+
+                    if (japanese.Contains(searchWord))
+                    {
+                        searchResult.Ainu = ainu;
+                        searchResult.Japanese = japanese;
+                        similaritySearchResults.Add(searchResult);
+                    }
+
+                    break;
+
+                case SearchMode.AinuToJapanese:
+
+                    if (ainu.Contains(searchWord))
+                    {
+                        searchResult.Ainu = ainu;
+                        searchResult.Japanese = japanese;
+                        similaritySearchResults.Add(searchResult);
+                    }
+
+                    break;
+            }
+        }
+
+        List<SearchResults> exactMatch = new List<SearchResults>();
+
+        for (int k = 0; k < similaritySearchResults.Count; k++)
+        {
+            switch (_searchMode)
+            {
+                case SearchMode.JapaneseToAinu:
+
+                    if (similaritySearchResults[k].Japanese == searchWord)
+                    {
+                        exactMatch.Add(similaritySearchResults[k]);
+                        similaritySearchResults.RemoveAt(k);
+                    }
+
+                    break;
+
+                case SearchMode.AinuToJapanese:
+
+                    if (similaritySearchResults[k].Ainu == searchWord)
+                    {
+                        exactMatch.Add(similaritySearchResults[k]);
+                        similaritySearchResults.RemoveAt(k);
+                    }
+
+                    break;
+            }
+        }
+
+        for (int l = 0; l < exactMatch.Count; l++)
+        {
+            _pool.GetPoolObject().GetComponent<Text>().text = exactMatch[l].Ainu + " : " + exactMatch[l].Japanese;
+            _pool.GetPoolObject().GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 700 - (100 * l));
+            _pool.GetPoolObject().SetActive(true);
+        }
+
+        for (int m = 0; m < similaritySearchResults.Count; m++)
+        {
+            _pool.GetPoolObject().GetComponent<Text>().text = similaritySearchResults[m].Ainu + " : " + similaritySearchResults[m].Japanese;
+            _pool.GetPoolObject().GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 100 - (100 * m));
+            _pool.GetPoolObject().SetActive(true);
+        }
     }
     #endregion
 
     #region 翻訳
-    private void Translation(Results[] analysisResults)
+    private void Translation(AnalysisResults[] analysisResults)
     {
-        for (int j = 0; j < _results.Length; j++)
+        for (int j = 0; j < _analysisResults.Length; j++)
         {
             DataTable query = default;
 
-            if (_results[j].PartsOfSpeech.Contains("名詞"))
+            if (_analysisResults[j].PartsOfSpeech.Contains("名詞"))
             {
                 query = _dTs[0];
             }
-            else if (_results[j].PartsOfSpeech.Contains("動詞"))
+            else if (_analysisResults[j].PartsOfSpeech.Contains("動詞"))
             {
                 query = _dTs[1];
             }
-            else if (_results[j].PartsOfSpeech.Contains("副詞"))
+            else if (_analysisResults[j].PartsOfSpeech.Contains("副詞"))
             {
                 query = _dTs[2];
             }
@@ -196,7 +289,7 @@ public class DB_fetch : MonoBehaviour
                 string ainu = $"{row["Ainu"]}";
                 string japanese = $"{row["Japanese"]}";
 
-                if (japanese.Contains(_results[j].Surface))
+                if (japanese.Contains(_analysisResults[j].Surface))
                 {
                     print(ainu);
                     translationResults.Add(ainu);
@@ -205,14 +298,14 @@ public class DB_fetch : MonoBehaviour
 
             if (translationResults.Count == 0)
             {
-                print(_results[j].Surface);
-                translationResults.Add(_results[j].Surface);
+                print(_analysisResults[j].Surface);
+                translationResults.Add(_analysisResults[j].Surface);
             }
 
-            _translationResults.Add(translationResults);
+            //_translationResults.Add(translationResults);
         }
 
-        _results = null;
+        _analysisResults = null;
     }
     #endregion
 }
