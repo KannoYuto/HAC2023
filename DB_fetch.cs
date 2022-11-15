@@ -7,12 +7,6 @@ using NMeCab.Specialized;
 
 public class DB_fetch : MonoBehaviour
 {
-    [SerializeField]
-    private Transform _poolObj = default;
-
-    [SerializeField]
-    private ObjectPool _pool = default;
-
     //データベース格納用変数
     private SqliteDatabase _dB = default;
 
@@ -21,10 +15,6 @@ public class DB_fetch : MonoBehaviour
 
     //データテーブル格納用配列
     private DataTable[] _dTs = default;
-
-    //コンポーネント取得用変数
-    [SerializeField]
-    private InputField _iF = default;
 
     //モード選択用
     private enum AnalysisMode
@@ -35,6 +25,7 @@ public class DB_fetch : MonoBehaviour
     [SerializeField]
     private AnalysisMode _analysisMode = default;
 
+    //検索方式選択用
     private enum SearchMode
     {
         JapaneseToAinu,
@@ -46,28 +37,17 @@ public class DB_fetch : MonoBehaviour
     //形態素解析用辞書パス
     private const string DIC_DIR = @"Assets/NMeCab-0.10.2/dic/ipadic";
 
-    //形態素解析結果格納用クラス
-    public class AnalysisResults
-    {
-        public string Surface { get; set; }
-        public string PartsOfSpeech { get; set; }
-        public string PartsOfSpeechSection1 { get; set; }
-        public string PartsOfSpeechSection2 { get; set; }
-    }
-
     //形態素解析結果格納用配列
     private AnalysisResults[] _analysisResults = default;
 
-    //検索結果格納用クラス
-    public class SearchResults
-    {
-        public string Ainu { get; set; }
-        public string Japanese { get; set; }
-    }
+    //コンポーネント取得用変数
+    [SerializeField]
+    private InputField _iF = default;
 
-    ////翻訳結果格納用二次元リスト
-    //private List<List<string>> _translationResults = new List<List<string>>();
+    [SerializeField]
+    private Text _text = default;
 
+    #region 初期処理
     private void Awake()
     {
         //データベースを格納
@@ -99,6 +79,7 @@ public class DB_fetch : MonoBehaviour
             }
         }
     }
+    #endregion
 
     #region 形態素解析
     private List<AnalysisResults> Analysis(string searchWord)
@@ -125,8 +106,6 @@ public class DB_fetch : MonoBehaviour
                 result.PartsOfSpeechSection1 = $"{item.PartsOfSpeechSection1}";
                 result.PartsOfSpeechSection2 = $"{item.PartsOfSpeechSection2}";
 
-                print(result.Surface + " : " + result.PartsOfSpeech + " : " + result.PartsOfSpeechSection1 + " : " + result.PartsOfSpeechSection2);
-
                 results.Add(result);
             }
         }
@@ -138,26 +117,21 @@ public class DB_fetch : MonoBehaviour
     #region 検索/翻訳開始ボタン
     public void StartSerch_OR_Analysis()
     {
-        foreach (Transform text in _poolObj)
-        {
-            if (text.gameObject.activeInHierarchy)
-            {
-                text.gameObject.SetActive(false);
-            }
-        }
-
         switch (_analysisMode)
         {
             case AnalysisMode.Search:
 
+                //検索開始
                 Search(_iF.text);
 
                 break;
 
             case AnalysisMode.Translation:
 
+                //テキストが入力されていたら
                 if (Analysis(_iF.text) != null)
                 {
+                    //翻訳開始
                     _analysisResults = Analysis(_iF.text).ToArray();
                     Translation(_analysisResults);
                 }
@@ -176,10 +150,13 @@ public class DB_fetch : MonoBehaviour
             return;
         }
 
+        //問い合わせ
         DataTable query = _dB.ExecuteQuery("SELECT Ainu,Japanese FROM Language");
 
+        //検索結果格納用リスト
         List<SearchResults> similaritySearchResults = new List<SearchResults>();
 
+        //検索ワードを含むレコードを抽出
         foreach (DataRow row in query.Rows)
         {
             string ainu = $"{row["Ainu"]}";
@@ -213,18 +190,35 @@ public class DB_fetch : MonoBehaviour
             }
         }
 
+        //検索ワードと完全一致するレコードを格納するリスト
         List<SearchResults> exactMatch = new List<SearchResults>();
 
-        for (int k = 0; k < similaritySearchResults.Count; k++)
+        //部分一致の中から完全一致するものを見つける
+        for (int k = similaritySearchResults.Count - 1; k >= 0; k--)
         {
             switch (_searchMode)
             {
                 case SearchMode.JapaneseToAinu:
 
+                    //完全一致したら
                     if (similaritySearchResults[k].Japanese == searchWord)
                     {
                         exactMatch.Add(similaritySearchResults[k]);
                         similaritySearchResults.RemoveAt(k);
+                    }
+
+                    //、で区切られた要素が一致したら
+                    else if (similaritySearchResults[k].Japanese.Contains("、"))
+                    {
+                        foreach (string item in similaritySearchResults[k].Japanese.Split('、'))
+                        {
+                            if (item == searchWord)
+                            {
+                                exactMatch.Add(similaritySearchResults[k]);
+                                similaritySearchResults.RemoveAt(k);
+                                break;
+                            }
+                        }
                     }
 
                     break;
@@ -241,18 +235,26 @@ public class DB_fetch : MonoBehaviour
             }
         }
 
+        //検索結果を出力する
+        _text.text = null;
+
+        _text.text = String.Concat(_text.text, "完全一致", "\n");
+
         for (int l = 0; l < exactMatch.Count; l++)
         {
-            _pool.GetPoolObject().GetComponent<Text>().text = exactMatch[l].Ainu + " : " + exactMatch[l].Japanese;
-            _pool.GetPoolObject().GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 700 - (100 * l));
-            _pool.GetPoolObject().SetActive(true);
+            _text.text = String.Concat(_text.text, $"{l + 1}", ". ", exactMatch[l].Ainu, " : ", exactMatch[l].Japanese, "\n");
         }
+
+        if (exactMatch.Count == 0)
+        {
+            _text.text = String.Concat(_text.text, "該当なし", "\n");
+        }
+
+        _text.text = String.Concat(_text.text, "", "\n", "部分一致", "\n");
 
         for (int m = 0; m < similaritySearchResults.Count; m++)
         {
-            _pool.GetPoolObject().GetComponent<Text>().text = similaritySearchResults[m].Ainu + " : " + similaritySearchResults[m].Japanese;
-            _pool.GetPoolObject().GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 100 - (100 * m));
-            _pool.GetPoolObject().SetActive(true);
+            _text.text = String.Concat(_text.text, $"{m + 1}", ". ", similaritySearchResults[m].Ainu, " : ", similaritySearchResults[m].Japanese, "\n");
         }
     }
     #endregion
@@ -308,4 +310,14 @@ public class DB_fetch : MonoBehaviour
         _analysisResults = null;
     }
     #endregion
+
+    public void JapaneseToAinu()
+    {
+        _searchMode = SearchMode.JapaneseToAinu;
+    }
+
+    public void AinuToJapanese()
+    {
+        _searchMode = SearchMode.AinuToJapanese;
+    }
 }
