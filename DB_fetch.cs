@@ -238,7 +238,7 @@ public class DB_fetch : MonoBehaviour
         //検索結果を出力する
         _text.text = null;
 
-        _text.text = String.Concat(_text.text, "完全一致", "\n");
+        _text.text = String.Concat(_text.text, "\n", "完全一致", "\n");
 
         for (int l = 0; l < exactMatch.Count; l++)
         {
@@ -256,25 +256,32 @@ public class DB_fetch : MonoBehaviour
         {
             _text.text = String.Concat(_text.text, $"{m + 1}", ". ", similaritySearchResults[m].Ainu, " : ", similaritySearchResults[m].Japanese, "\n");
         }
+
+        if (similaritySearchResults.Count == 0)
+        {
+            _text.text = String.Concat(_text.text, "該当なし", "\n");
+        }
     }
     #endregion
 
     #region 翻訳
     private void Translation(AnalysisResults[] analysisResults)
     {
-        for (int j = 0; j < _analysisResults.Length; j++)
+        _text.text = null;
+
+        for (int j = 0; j < analysisResults.Length; j++)
         {
             DataTable query = default;
 
-            if (_analysisResults[j].PartsOfSpeech.Contains("名詞"))
+            if (analysisResults[j].PartsOfSpeech.Contains("名詞"))
             {
                 query = _dTs[0];
             }
-            else if (_analysisResults[j].PartsOfSpeech.Contains("動詞"))
+            else if (analysisResults[j].PartsOfSpeech.Contains("動詞"))
             {
                 query = _dTs[1];
             }
-            else if (_analysisResults[j].PartsOfSpeech.Contains("副詞"))
+            else if (analysisResults[j].PartsOfSpeech.Contains("副詞"))
             {
                 query = _dTs[2];
             }
@@ -283,28 +290,7 @@ public class DB_fetch : MonoBehaviour
                 query = _dTs[3];
             }
 
-            //翻訳結果格納用リスト
-            List<string> translationResults = new List<string>();
-
-            foreach (DataRow row in query.Rows)
-            {
-                string ainu = $"{row["Ainu"]}";
-                string japanese = $"{row["Japanese"]}";
-
-                if (japanese.Contains(_analysisResults[j].Surface))
-                {
-                    print(ainu);
-                    translationResults.Add(ainu);
-                }
-            }
-
-            if (translationResults.Count == 0)
-            {
-                print(_analysisResults[j].Surface);
-                translationResults.Add(_analysisResults[j].Surface);
-            }
-
-            //_translationResults.Add(translationResults);
+            _text.text = String.Concat(_text.text, analysisResults[j].Surface, " : ", analysisResults[j].PartsOfSpeech, "\n");
         }
 
         _analysisResults = null;
