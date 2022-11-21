@@ -3,27 +3,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using NMeCab.Specialized;
 
 public class DB_fetch : MonoBehaviour
 {
     //データベース格納用変数
-    private SqliteDatabase _dB = default;
+    private SqliteDatabase _ainuDB = default;
 
     //分類する○詞の数
     private const int POS = 4;
 
-    //データテーブル格納用配列
-    private DataTable[] _dTs = default;
+    //データテーブル格納用
+    private DataTable _languageTable = default;
 
-    //モード選択用
-    private enum AnalysisMode
-    {
-        Search,
-        Translation
-    }
-    [SerializeField]
-    private AnalysisMode _analysisMode = default;
+    //データテーブル格納用配列
+    private DataTable[] _pOSTable = default;
 
     //検索方式選択用
     private enum SearchMode
@@ -34,16 +27,9 @@ public class DB_fetch : MonoBehaviour
     [SerializeField]
     private SearchMode _searchMode = default;
 
-    //形態素解析用辞書パス
-    private const string DIC_DIR = @"Assets/NMeCab-0.10.2/dic/ipadic";
-
-    //形態素解析結果格納用配列
-    private AnalysisResults[] _analysisResults = default;
-
     //コンポーネント取得用変数
     [SerializeField]
     private InputField _iF = default;
-
     [SerializeField]
     private Text _text = default;
 
@@ -51,93 +37,48 @@ public class DB_fetch : MonoBehaviour
     private void Awake()
     {
         //データベースを格納
-        _dB = new SqliteDatabase("ainu_DB_ALL.db");
+        _ainuDB = new SqliteDatabase("ainu_DB_ALL.db");
+
+        //アイヌ語、日本語のテーブルを作成
+        _languageTable = _ainuDB.ExecuteQuery("SELECT Ainu,Japanese FROM Language");
 
         //配列を初期化
-        _dTs = new DataTable[POS];
+        _pOSTable = new DataTable[POS];
 
-        //それぞれのSQL文を実行した結果を配列に格納
+        //品詞ごとに分けられたテーブルを配列に格納
         for (int i = 0; i < POS; i++)
         {
             switch (i)
             {
                 case 0:
-                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%名詞';");
+                    //～名詞
+                    _pOSTable[i] = _ainuDB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%名詞';");
                     break;
 
                 case 1:
-                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%動詞'");
+                    //～動詞
+                    _pOSTable[i] = _ainuDB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%動詞'");
                     break;
 
                 case 2:
-                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%副詞'");
+                    //～副詞
+                    _pOSTable[i] = _ainuDB.ExecuteQuery("SELECT * FROM Language WHERE PoS like '%副詞'");
                     break;
 
                 case 3:
-                    _dTs[i] = _dB.ExecuteQuery("SELECT * FROM Language WHERE PoS NOT like '%名詞' AND PoS NOT like '%動詞' AND PoS NOT like '%副詞'");
+                    //上記以外の品詞
+                    _pOSTable[i] = _ainuDB.ExecuteQuery("SELECT * FROM Language WHERE PoS NOT like '%名詞' AND PoS NOT like '%動詞' AND PoS NOT like '%副詞'");
                     break;
             }
         }
     }
     #endregion
 
-    #region 形態素解析
-    private List<AnalysisResults> Analysis(string searchWord)
-    {
-        //何も入力されていなかったら
-        if (searchWord == "")
-        {
-            return null;
-        }
-
-        //解析結果格納用
-        List<AnalysisResults> results = new List<AnalysisResults>();
-
-        //形態素解析した要素をリストに格納
-        using (MeCabIpaDicTagger tagger = MeCabIpaDicTagger.Create(DIC_DIR))
-        {
-            MeCabIpaDicNode[] nodes = tagger.Parse(searchWord);
-
-            foreach (MeCabIpaDicNode item in nodes)
-            {
-                AnalysisResults result = new AnalysisResults();
-                result.Surface = $"{item.Surface}";
-                result.PartsOfSpeech = $"{item.PartsOfSpeech}";
-                result.PartsOfSpeechSection1 = $"{item.PartsOfSpeechSection1}";
-                result.PartsOfSpeechSection2 = $"{item.PartsOfSpeechSection2}";
-
-                results.Add(result);
-            }
-        }
-
-        return results;
-    }
-    #endregion
-
-    #region 検索/翻訳開始ボタン
+    #region 検索開始ボタン
     public void StartSerch_OR_Analysis()
     {
-        switch (_analysisMode)
-        {
-            case AnalysisMode.Search:
-
-                //検索開始
-                Search(_iF.text);
-
-                break;
-
-            case AnalysisMode.Translation:
-
-                //テキストが入力されていたら
-                if (Analysis(_iF.text) != null)
-                {
-                    //翻訳開始
-                    _analysisResults = Analysis(_iF.text).ToArray();
-                    Translation(_analysisResults);
-                }
-
-                break;
-        }
+        //検索開始
+        Search(_iF.text);
     }
     #endregion
 
@@ -150,24 +91,29 @@ public class DB_fetch : MonoBehaviour
             return;
         }
 
-        //問い合わせ
-        DataTable query = _dB.ExecuteQuery("SELECT Ainu,Japanese FROM Language");
-
         //検索結果格納用リスト
         List<SearchResults> similaritySearchResults = new List<SearchResults>();
 
         //検索ワードを含むレコードを抽出
-        foreach (DataRow row in query.Rows)
+        foreach (DataRow row in _languageTable.Rows)
         {
+            //列の要素を文字列として取り出し
             string ainu = $"{row["Ainu"]}";
             string japanese = $"{row["Japanese"]}";
 
+            //抽出結果格納用リスト
             SearchResults searchResult = new SearchResults();
 
+            //検索方式選択
             switch (_searchMode)
             {
+                //日本語からアイヌ語
                 case SearchMode.JapaneseToAinu:
 
+                    /*
+                     * 入力された日本語が要素中に含まれていたら
+                     * 類似検索結果としてリストへ格納する
+                     */
                     if (japanese.Contains(searchWord))
                     {
                         searchResult.Ainu = ainu;
@@ -177,8 +123,13 @@ public class DB_fetch : MonoBehaviour
 
                     break;
 
+                //アイヌ語から日本語
                 case SearchMode.AinuToJapanese:
 
+                    /*
+                     * 入力されたアイヌ語が要素中に含まれていたら
+                     * 類似検索結果としてリストへ格納する
+                     */
                     if (ainu.Contains(searchWord))
                     {
                         searchResult.Ainu = ainu;
@@ -196,18 +147,26 @@ public class DB_fetch : MonoBehaviour
         //部分一致の中から完全一致するものを見つける
         for (int k = similaritySearchResults.Count - 1; k >= 0; k--)
         {
+            //検索方式選択
             switch (_searchMode)
             {
+                //日本語からアイヌ語
                 case SearchMode.JapaneseToAinu:
 
-                    //完全一致したら
+                    /*
+                     * 完全一致したら結果をリストに格納し、
+                     * 部分一致結果から削除する
+                     */
                     if (similaritySearchResults[k].Japanese == searchWord)
                     {
                         exactMatch.Add(similaritySearchResults[k]);
                         similaritySearchResults.RemoveAt(k);
                     }
 
-                    //、で区切られた要素が一致したら
+                    /*
+                     *( 、)で区切られた要素が一致したら結果をリストに格納し、
+                     * 部分一致結果から削除する
+                     */
                     else if (similaritySearchResults[k].Japanese.Contains("、"))
                     {
                         foreach (string item in similaritySearchResults[k].Japanese.Split('、'))
@@ -223,8 +182,13 @@ public class DB_fetch : MonoBehaviour
 
                     break;
 
+                //アイヌ語から日本語
                 case SearchMode.AinuToJapanese:
 
+                    /*
+                     * 完全一致したら結果をリストに格納し、
+                     * 部分一致結果から削除する
+                     */
                     if (similaritySearchResults[k].Ainu == searchWord)
                     {
                         exactMatch.Add(similaritySearchResults[k]);
@@ -235,7 +199,7 @@ public class DB_fetch : MonoBehaviour
             }
         }
 
-        //検索結果を出力する
+        //検索結果をテキストとして出力する
         _text.text = null;
 
         _text.text = String.Concat(_text.text, "\n", "完全一致", "\n");
@@ -261,39 +225,6 @@ public class DB_fetch : MonoBehaviour
         {
             _text.text = String.Concat(_text.text, "該当なし", "\n");
         }
-    }
-    #endregion
-
-    #region 翻訳
-    private void Translation(AnalysisResults[] analysisResults)
-    {
-        _text.text = null;
-
-        for (int j = 0; j < analysisResults.Length; j++)
-        {
-            DataTable query = default;
-
-            if (analysisResults[j].PartsOfSpeech.Contains("名詞"))
-            {
-                query = _dTs[0];
-            }
-            else if (analysisResults[j].PartsOfSpeech.Contains("動詞"))
-            {
-                query = _dTs[1];
-            }
-            else if (analysisResults[j].PartsOfSpeech.Contains("副詞"))
-            {
-                query = _dTs[2];
-            }
-            else
-            {
-                query = _dTs[3];
-            }
-
-            _text.text = String.Concat(_text.text, analysisResults[j].Surface, " : ", analysisResults[j].PartsOfSpeech, "\n");
-        }
-
-        _analysisResults = null;
     }
     #endregion
 
