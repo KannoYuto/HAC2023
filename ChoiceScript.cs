@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ChoiceScript : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class ChoiceScript : MonoBehaviour
     //『解答』ボタン
     [SerializeField]
     private GameObject _kaitouButton = default;
+    private Image _kaitouUI = default;
     //『解答』のスクリプト
     [SerializeField]
     private Kaitou _kaitou = default;
@@ -19,15 +21,13 @@ public class ChoiceScript : MonoBehaviour
     {
         _kaitouButton = GameObject.FindWithTag("AnswerUI");
         _kaitou = _kaitouButton.GetComponent<Kaitou>();
-    }
-    private void Start()
-    {
-        _kaitouButton.SetActive(false);
+        _kaitouUI = _kaitouButton.GetComponent<Image>();
+        _kaitouUI.GetComponent<Image>().enabled = false;
     }
     public void OnClick()
     {
         //選択肢が選択されたら『解答』ボタンを表示
-        _kaitouButton.SetActive(true);
+        _kaitouUI.GetComponent<Image>().enabled = true;
         //選択された答えが正解か否かのフラグを設定
         _kaitou.SetBool(isAnswer);
     }

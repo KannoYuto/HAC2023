@@ -12,14 +12,8 @@ public class Kaitou : MonoBehaviour
     //正解の選択肢か否かのフラグ
     private bool isAnswer = false;
     //正解と不正解のテキスト
-    [SerializeField]
-    private GameObject _correctAnswer = default;
-    [SerializeField]
-    private GameObject _incorrectAnswer = default;
     private GameObject[] _Uis = new GameObject[3];
-    private void Awake()
-    {
-    }
+
     public void OnClick()
     {
         //選択されたのが正解だったら
@@ -28,7 +22,7 @@ public class Kaitou : MonoBehaviour
             //正解のUIを見えなくする処理
             for (int i = 0; i < _Uis.Length; i++)
             {
-                _Uis[i] = GameObject.FindGameObjectWithTag("CorrectAnswer");
+                _Uis[i] = GameObject.FindGameObjectWithTag("CorrectAnswerText").transform.parent.gameObject;
 
                 foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
                 {
@@ -43,7 +37,7 @@ public class Kaitou : MonoBehaviour
                 }
             }
             //『解答』ボタンを非表示
-            this.gameObject.SetActive(false);
+            this.gameObject.GetComponent<Image>().enabled = false;
         }
         //不正解なら
         else
@@ -51,7 +45,7 @@ public class Kaitou : MonoBehaviour
             //不正解のUIを見えなくする処理
             for (int i = 0; i < _Uis.Length; i++)
             {
-                _Uis[i] = GameObject.FindGameObjectWithTag("IncorrectAnswer");
+                _Uis[i] = GameObject.FindGameObjectWithTag("IncorrectAnswerText").transform.parent.gameObject;
 
                 foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
                 {
@@ -66,7 +60,7 @@ public class Kaitou : MonoBehaviour
                 }
             }
             //『解答』ボタンを非表示
-            this.gameObject.SetActive(false);
+            this.gameObject.GetComponent<Image>().enabled = false;
         }
     }
     public void SetBool(bool isAnswer)
