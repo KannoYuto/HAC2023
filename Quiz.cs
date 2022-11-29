@@ -102,9 +102,6 @@ public class Quiz : MonoBehaviour
         //最初にクイズ出題処理を呼び出す
         QuizAct();
     }
-    private void Start()
-    {
-    }
     //クイズの出題処理
     public void QuizAct()
     {
@@ -117,7 +114,7 @@ public class Quiz : MonoBehaviour
         _dataCount = 0;
         _trapWordCount = 0;
         //出題する単語を選択
-        int randomWords = Random.Range(1, _maxDate);
+        int correctAnswerWords = Random.Range(1, _maxDate);
         //ダミーの単語を選択
         int trapChoice = Random.Range(1, _maxDate);
 
@@ -149,14 +146,14 @@ public class Quiz : MonoBehaviour
             string pos = $"{row["PoS"]}";
 
             //答えとダミーが一緒だったら再抽選
-            if (randomWords == trapChoice)
+            if (correctAnswerWords == trapChoice)
             {
                 trapChoice = Random.Range(1, _maxDate);
             }
             //カウントアップ
             _dataCount++;
             //問題と正解を表示する処理
-            if (_dataCount == randomWords)
+            if (_dataCount == correctAnswerWords)
             {
                 //出題単語を表示
                 _quizText.text = $"{ainu}";
