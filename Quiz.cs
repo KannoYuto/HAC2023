@@ -9,19 +9,19 @@ public class Quiz : MonoBehaviour
 {
     //使用するデータベース
     private const string CONST_DATA = "ainu_DB_ALL.db";
-    [SerializeField, Header("問題用のテキスト")]
+    [SerializeField, Header("問題用のテキストが自動で入る")]
     private Text _quizText = default;
-    [SerializeField, Header("正解のテキスト")]
+    [SerializeField, Header("正解のテキストが自動で入る")]
     private Text _correctAnswerText = default;
-    [SerializeField, Header("不正解のテキスト")]
+    [SerializeField, Header("不正解のテキストが自動で入る")]
     private Text _incorrectAnswerText = default;
-    [SerializeField, Header("クイズ用のデータの行をカウントする変数")]
+    [SerializeField, Header("クイズ用のデータの行をカウントする変数(変更不要)")]
     private int _dataCount = 0;
-    [SerializeField, Header("クイズで使用するデータの最大値")]
+    [SerializeField, Header("クイズで使用するデータの最大値を入れる")]
     private int _maxDate = default;
-    [SerializeField, Header("解答群を格納する配列")]
+    [SerializeField, Header("解答群が自動で入る")]
     private Text[] _choises =new Text[4];
-    [SerializeField, Header("第〇問を表示するテキスト")]
+    [SerializeField, Header("第〇問を表示するテキストを入れる")]
     private Text _countText = default;
     //回答群の数
     private int _textCount = 0;
@@ -33,13 +33,14 @@ public class Quiz : MonoBehaviour
     private ChoiceScript _choiseScript = default;
     //データベースを格納
     private DataTable _dataTable = default;
-    private GameObject[] _Uis = new GameObject[3];
+    //非表示にするUIを格納する配列
+    private GameObject[] _Uis = new GameObject[1];
 
     private void Awake()
     {
         //データベースを引っ張り出す
         SqliteDatabase currentDB = new SqliteDatabase(CONST_DATA);
-        //SQL文でクイズに使う単語を抽出
+        //SQL文でクイズに使う単語を抽出(～や「」などの言葉を除外)
         _dataTable = currentDB.ExecuteQuery(
             "SELECT Ainu,Japanese " +
             "FROM Language " +
@@ -54,16 +55,18 @@ public class Quiz : MonoBehaviour
 
         //問題のテキストを取得
         _quizText = this.GetComponent<Text>();
-        //問題のテキストを取得
+        //正解のテキストを取得
         _correctAnswerText = GameObject.FindWithTag("CorrectAnswerText").GetComponent<Text>();
+        //不正解のテキストを取得
         _incorrectAnswerText = GameObject.FindWithTag("IncorrectAnswerText").GetComponent<Text>();
+        //配列に選択肢のテキストを格納する
         GameObject[] choise = GameObject.FindGameObjectsWithTag("ChoiseText");
-
         for (int i = 0; i < choise.Length; i++)
         {
             _choises[i] = choise[i].GetComponent<Text>();
         }
 
+        #region 正解・不正解のUIを非表示
         //正解のUIを見えなくする処理
         for (int i = 0; i < _Uis.Length; i++)
         {
@@ -98,7 +101,8 @@ public class Quiz : MonoBehaviour
                 }
             }
         }
-        
+        #endregion
+
         //最初にクイズ出題処理を呼び出す
         QuizAct();
     }
@@ -114,10 +118,16 @@ public class Quiz : MonoBehaviour
         _dataCount = 0;
         _trapWordCount = 0;
         //出題する単語を選択
-        int correctAnswerWords = Random.Range(1, _maxDate);
+        int correctAnswerWord = Random.Range(1, _maxDate);
         //ダミーの単語を選択
         int trapchoise = Random.Range(1, _maxDate);
 
+        //答えとダミーが一緒だったら答えの番号より後の数字で再抽選
+        if (correctAnswerWord == trapchoise)
+        {
+            trapchoise = Random.Range(correctAnswerWord + 1, _maxDate);
+        }
+        
         #region 選択肢をシャッフルする
         //選択肢の配列の長さを数値として格納
         int choisesLength = _choises.Length;
@@ -144,16 +154,16 @@ public class Quiz : MonoBehaviour
             string japanese = $"{row["Japanese"]}";
             //品詞を格納
             string pos = $"{row["PoS"]}";
-
-            //答えとダミーが一緒だったら再抽選
-            if (correctAnswerWords == trapchoise)
+            //もしも途中で単語の番号が最大値になったらやり直し
+            if (trapchoise == _maxDate || correctAnswerWord == _maxDate)
             {
-                trapchoise = Random.Range(1, _maxDate);
+                QuizAct();
             }
+
             //カウントアップ
             _dataCount++;
             //問題と正解を表示する処理
-            if (_dataCount == correctAnswerWords)
+            if (_dataCount == correctAnswerWord)
             {
                 //出題単語を表示
                 _quizText.text = $"{ainu}";

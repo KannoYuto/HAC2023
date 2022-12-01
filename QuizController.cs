@@ -9,23 +9,21 @@ public class QuizController : MonoBehaviour
 {
     //変更後の色
     private Color PushColor = new Color32(200, 200, 200, 255);
-    [SerializeField]
+    [SerializeField, Header("選択肢が自動で入る")]
     private GameObject[] _choise = new GameObject[4];
-    //EventSystem
-    [SerializeField] private EventSystem eventSystem;
-    //クイズのスクリプトがあるGameObject
-    private GameObject _quizObj = default;
+    //EventSystem(選択した選択肢を識別するため)
+    [SerializeField,Header("EventSistemを入れる")] 
+    private EventSystem eventSystem;
     //クイズのスクリプト
     private Quiz _quiz;
-
-    //正解と不正解のテキスト
-    private GameObject[] _Uis = new GameObject[3];
+    //非表示にするUIを格納する配列
+    private GameObject[] _Uis = new GameObject[1];
 
     private void Awake()
     {
         //クイズのスクリプトを取得
-        _quizObj = GameObject.Find("Question_Text");
-        _quiz = _quizObj.GetComponent<Quiz>();
+        _quiz = GameObject.Find("Question_Text").GetComponent<Quiz>();
+        //配列に選択肢を格納する
         GameObject[] choise = GameObject.FindGameObjectsWithTag("ChoiseUi");
 
         for (int i = 0; i < choise.Length; i++)
@@ -33,25 +31,33 @@ public class QuizController : MonoBehaviour
             _choise[i] = choise[i].gameObject;
         }
     }
-    //色変える
+    #region 選択肢の色変える
     public void ColorChange()
     {
+        //押した選択肢を取得
         GameObject button_ob = eventSystem.currentSelectedGameObject;
+        //選択肢の色をリセット
         for (int i = 0; i < _choise.Length; i++)
         {
             _choise[i].gameObject.GetComponent<Image>().color = Color.white;
         }
+        //押された選択肢の色を変える
         button_ob.gameObject.GetComponent<Image>().color = PushColor;
     }
-    //UI消す
+    #endregion
+
+    #region 選択肢の色を戻す
     public void ResetButton()
     {
+        //色を元に戻す
         for (int i = 0; i < _choise.Length; i++)
         {
             _choise[i].gameObject.GetComponent<Image>().color = Color.white;
         }
     }
-    //再出題
+    #endregion
+
+    #region 再出題
     public void ReQuiz()
     {
         //正解のUIを見えなくする処理
@@ -91,4 +97,5 @@ public class QuizController : MonoBehaviour
         //再出題
         _quiz.QuizAct();
     }
+    #endregion
 }
