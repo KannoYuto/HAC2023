@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -113,6 +114,8 @@ public class AppController : MonoBehaviour
         }
     }
 
+
+
     public void QuizMode()
     {
         _mode = Mode.Quiz;
@@ -132,5 +135,15 @@ public class AppController : MonoBehaviour
         ChildsNonDisplay(_uIByFunctions[0], _uIByFunctions[0].GetComponentsInChildren<Transform>());
         ChildsNonDisplay(_uIByFunctions[1], _uIByFunctions[1].GetComponentsInChildren<Transform>());
         ChildsDisplay(_uIByFunctions[2], _uIByFunctions[2].GetComponentsInChildren<Transform>());
+    }
+
+    public int CurrentMode()
+    {
+        return (int)_mode;
+    }
+
+    public void Test()
+    {
+        Debug.Log("Clicked!!");
     }
 }
