@@ -13,10 +13,16 @@ public class Answer : MonoBehaviour
     private bool isAnswer = false;
     //非表示にするUIを格納する配列
     private GameObject[] _Uis = new GameObject[1];
+    [SerializeField, Header("リザルトを表示するテキストが自動で入る")]
+    private Result _result = default;
 
+    private void Awake()
+    {
+        _result = GameObject.FindWithTag("EndText").GetComponent<Result>();
+    }
     public void OnClick()
     {
-        //選択されたのが正解だったら
+        #region 選択されたのが正解だったら
         if (isAnswer)
         {
             //正解のUIを見えるようにする処理
@@ -37,10 +43,13 @@ public class Answer : MonoBehaviour
                     }
                 }
             }
+            _result.CorrectAnswerAdd();
             //『解答』ボタンを非表示
             this.gameObject.GetComponent<Image>().enabled = false;
         }
-        //不正解なら
+        #endregion
+
+        #region 不正解なら
         else
         {
             //不正解のUIを見えるようにする処理
@@ -62,9 +71,11 @@ public class Answer : MonoBehaviour
                     }
                 }
             }
+            _result.IncorrectAnswerAdd();
             //『解答』ボタンを非表示
             this.gameObject.GetComponent<Image>().enabled = false;
         }
+        #endregion
     }
     public void SetBool(bool isAnswer)
     {

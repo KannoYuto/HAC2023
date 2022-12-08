@@ -15,14 +15,22 @@ public class Quiz : MonoBehaviour
     private Text _correctAnswerText = default;
     [SerializeField, Header("不正解のテキストが自動で入る")]
     private Text _incorrectAnswerText = default;
+    [SerializeField, Header("クイズの問題数の最大値を入力")]
+    private int _quizMax = 0;
     [SerializeField, Header("クイズ用のデータの行をカウントする変数(変更不要)")]
     private int _dataCount = 0;
     [SerializeField, Header("クイズで使用するデータの最大値を入れる")]
     private int _maxDate = default;
     [SerializeField, Header("解答群が自動で入る")]
-    private Text[] _choises =new Text[4];
+    private Text[] _choises = new Text[4]; 
+    [SerializeField, Header("正解の番号が自動で入る")]
+    private int[] _answer = default;
     [SerializeField, Header("第〇問を表示するテキストを入れる")]
     private Text _countText = default;
+    [SerializeField, Header("タイマーを入れる")]
+    private Timer _timer = default;
+    [SerializeField, Header("リザルトのテキストが自動で入る")]
+    private Result _result = default;
     //回答群の数
     private int _textCount = 0;
     //ダミーの数
@@ -36,6 +44,13 @@ public class Quiz : MonoBehaviour
     //非表示にするUIを格納する配列
     private GameObject[] _Uis = new GameObject[1];
 
+    public enum Mode
+    {
+        Ainu,
+        Japanese
+    }
+    [SerializeField, Header("モード")]
+    private Mode mode = default;
     private void Awake()
     {
         //データベースを引っ張り出す
@@ -59,22 +74,25 @@ public class Quiz : MonoBehaviour
         _correctAnswerText = GameObject.FindWithTag("CorrectAnswerText").GetComponent<Text>();
         //不正解のテキストを取得
         _incorrectAnswerText = GameObject.FindWithTag("IncorrectAnswerText").GetComponent<Text>();
+        //リザルトのテキストを取得
+        _result = GameObject.FindWithTag("EndText").GetComponent<Result>();
         //配列に選択肢のテキストを格納する
         GameObject[] choise = GameObject.FindGameObjectsWithTag("ChoiseText");
+        _answer = new int[_quizMax];
         for (int i = 0; i < choise.Length; i++)
         {
             _choises[i] = choise[i].GetComponent<Text>();
         }
 
-        #region 正解・不正解のUIを非表示
+        #region 正解・不正解・終了のUIを非表示
         //正解のUIを見えなくする処理
         for (int i = 0; i < _Uis.Length; i++)
         {
-            _Uis[i]= GameObject.FindGameObjectWithTag("CorrectAnswerText").transform.parent.gameObject;
+            _Uis[i] = GameObject.FindGameObjectWithTag("CorrectAnswerText").transform.parent.gameObject;
 
-            foreach(Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
             {
-                if(child.gameObject.GetComponent<Image>())
+                if (child.gameObject.GetComponent<Image>())
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
@@ -87,11 +105,28 @@ public class Quiz : MonoBehaviour
         //不正解のUIを見えなくする処理
         for (int i = 0; i < _Uis.Length; i++)
         {
-            _Uis[i]= GameObject.FindGameObjectWithTag("IncorrectAnswerText").transform.parent.gameObject;
+            _Uis[i] = GameObject.FindGameObjectWithTag("IncorrectAnswerText").transform.parent.gameObject;
 
             foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
             {
-                if(child.gameObject.GetComponent<Image>())
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled = false;
+                }
+            }
+        }
+        //終了のUIを見えなくする処理
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("EndText").transform.parent.gameObject;
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
@@ -104,31 +139,85 @@ public class Quiz : MonoBehaviour
         #endregion
 
         //最初にクイズ出題処理を呼び出す
-        QuizAct();
+        QuizReStart();
     }
-    //クイズの出題処理
-    public void QuizAct()
+
+    //問題数のカウントから始める出題処理(出題処理中にやり直しても問題数を増やさない用)
+    public void QuizReStart()
     {
-        //問題数をカウントアップ
+        //何問めかのカウントをアップ
         _quizCount++;
+        #region 問題数が最大値までに達した時の処理
+        if (_quizCount > _quizMax)
+        {
+            _quizText.text = "";
+            _quizCount = 0;
+            //問題数を表示を初期化
+            _countText.text = "第" + $"{_quizCount}" + "問";
+            for (int i = 0; i < _choises.Length; i++)
+            {
+                _choises[i].text = "";
+            }
+            for (int i = 0; i < _answer.Length; i++)
+            {
+                _answer[i] = 0;
+            }
+            //終了のUIを見えなくする処理
+            for (int i = 0; i < _Uis.Length; i++)
+            {
+                _Uis[i] = GameObject.FindGameObjectWithTag("EndText").transform.parent.gameObject;
+
+                foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+                {
+                    if (child.gameObject.GetComponent<Image>())
+                    {
+                        child.gameObject.GetComponent<Image>().enabled = true;
+                    }
+                    else if (child.gameObject.GetComponent<Text>())
+                    {
+                        child.gameObject.GetComponent<Text>().enabled = true;
+                    }
+                }
+            }
+            _result.ResultText();
+            return;
+        }
+        #endregion
+
         //問題数を表示
         _countText.text = "第" + $"{_quizCount}" + "問";
+        QuizStart();
+    }
+    //クイズの出題処理
+    public void QuizStart()
+    {        
+        //タイマーのカウントを開始
+        _timer.TimerStart();
         //初期化
         _textCount = 0;
         _dataCount = 0;
         _trapWordCount = 0;
         //出題する単語を選択
         int correctAnswerWord = Random.Range(1, _maxDate);
+        for(int i = 0; i< _quizCount-1; i++)
+        {
+            if(_answer[i]==correctAnswerWord)
+            {
+                QuizStart();
+            }
+        }
+        _answer[_quizCount - 1] = correctAnswerWord;
         //ダミーの単語を選択
         int trapchoise = Random.Range(1, _maxDate);
-
+        #region 再抽選
         //答えとダミーが一緒だったら答えの番号より後の数字で再抽選
         if (correctAnswerWord == trapchoise)
         {
             trapchoise = Random.Range(correctAnswerWord + 1, _maxDate);
         }
-        
-        #region 選択肢をシャッフルする
+        #endregion
+
+        #region 選択肢をシャッフルする処理
         //選択肢の配列の長さを数値として格納
         int choisesLength = _choises.Length;
         while (choisesLength > 1)
@@ -136,63 +225,136 @@ public class Quiz : MonoBehaviour
             //カウントを減らす
             choisesLength--;
             //入れ替える選択肢を選ぶ
-            int changechoises = Random.Range(0, choisesLength);
+            int changeChoises = Random.Range(0, choisesLength);
             //選択肢を入れ替える
-            Text change = _choises[changechoises];
-            _choises[changechoises] = _choises[choisesLength];
+            Text change = _choises[changeChoises];
+            _choises[changeChoises] = _choises[choisesLength];
             _choises[choisesLength] = change;
         }
         #endregion
 
-        #region 解答群の準備
-        //クイズで使う単語
-        foreach (DataRow row in _dataTable.Rows)
+        #region 出題処理
+        switch (mode)
         {
-            //アイヌ語を格納
-            string ainu = $"{row["Ainu"]}";
-            //日本語を格納
-            string japanese = $"{row["Japanese"]}";
-            //品詞を格納
-            string pos = $"{row["PoS"]}";
-            //もしも途中で単語の番号が最大値になったらやり直し
-            if (trapchoise == _maxDate || correctAnswerWord == _maxDate)
-            {
-                QuizAct();
-            }
+            #region 解答群の準備(アイヌ語)
+            case Mode.Ainu:
+                //クイズで使う単語
+                foreach (DataRow row in _dataTable.Rows)
+                {
+                    //アイヌ語を格納
+                    string ainu = $"{row["Ainu"]}";
+                    //日本語を格納
+                    string japanese = $"{row["Japanese"]}";
+                    //品詞を格納
+                    string pos = $"{row["PoS"]}";
+                    //もしも途中で単語の番号が最大値になったらやり直し
+                    if (trapchoise == _maxDate || correctAnswerWord == _maxDate)
+                    {
+                        QuizStart();
+                    }
 
-            //カウントアップ
-            _dataCount++;
-            //問題と正解を表示する処理
-            if (_dataCount == correctAnswerWord)
-            {
-                //出題単語を表示
-                _quizText.text = $"{ainu}";
-                //解答に表示する答えを設定
-                _correctAnswerText.text = $"{japanese}";
-                _incorrectAnswerText.text = $"{japanese}";
-                //正解の選択肢に単語を入れる
-                _choises[_textCount].text = $"{japanese}";
-                //選択肢に対して正解のフラグを設定する
-                _choiseScript = _choises[_textCount].GetComponent<ChoiceScript>();
-                _choiseScript.TrueSet();
-                //選択肢の数をカウントアップ
-                _textCount++;
-            }
-            //ダミー選択肢の設定
-            else if (_dataCount == trapchoise&& _trapWordCount < 3)
-            {
-                //ダミーの解答群
-                _choises[_textCount].text = $"{japanese}";
-                //ダミーの単語を再抽選
-                trapchoise = Random.Range(trapchoise + 1, _maxDate);
-                //選択肢に対して不正解のフラグを設定する
-                _choiseScript = _choises[_textCount].GetComponent<ChoiceScript>();
-                _choiseScript.FalseSet();
-                //選択肢のカウントとダミー選択肢のカウントを+１
-                _textCount++;
-                _trapWordCount++;
-            }
+                    //カウントアップ
+                    _dataCount++;
+                    //問題と正解を表示する処理
+                    if (_dataCount == correctAnswerWord)
+                    {
+                        //出題単語を表示
+                        _quizText.text = $"{ainu}";
+                        //解答に表示する答えを設定
+                        _correctAnswerText.text = $"{japanese}";
+                        _incorrectAnswerText.text = $"{japanese}";
+                        //正解の選択肢に単語を入れる
+                        _choises[_textCount].text = $"{japanese}";
+                        //選択肢に対して正解のフラグを設定する
+                        _choiseScript = _choises[_textCount].GetComponent<ChoiceScript>();
+                        _choiseScript.TrueSet();
+                        //選択肢の数をカウントアップ
+                        _textCount++;
+                    }
+                    //ダミー選択肢の設定
+                    else if (_dataCount == trapchoise && _trapWordCount < 3)
+                    {
+                        //ダミーの解答群
+                        _choises[_textCount].text = $"{japanese}";
+                        //ダミーの単語を再抽選
+                        trapchoise = Random.Range(trapchoise + 1, _maxDate);
+                        //選択肢に対して不正解のフラグを設定する
+                        _choiseScript = _choises[_textCount].GetComponent<ChoiceScript>();
+                        _choiseScript.FalseSet();
+                        //選択肢のカウントとダミー選択肢のカウントを+１
+                        _textCount++;
+                        _trapWordCount++;
+                    }
+                }
+                break;
+            #endregion
+
+            #region 解答群の準備(日本語)
+            case Mode.Japanese:
+                //クイズで使う単語
+                foreach (DataRow row in _dataTable.Rows)
+                {
+                    //アイヌ語を格納
+                    string japanese = $"{row["Japanese"]}";
+                    //日本語を格納
+                    string ainu = $"{row["Ainu"]}";
+                    //品詞を格納
+                    string pos = $"{row["PoS"]}";
+                    //もしも途中で単語の番号が最大値になったらやり直し
+                    if (trapchoise == _maxDate || correctAnswerWord == _maxDate)
+                    {
+                        QuizStart();
+                    }
+
+                    //カウントアップ
+                    _dataCount++;
+                    //問題と正解を表示する処理
+                    if (_dataCount == correctAnswerWord)
+                    {
+                        //出題単語を表示
+                        _quizText.text = $"{japanese}";
+                        //解答に表示する答えを設定
+                        _correctAnswerText.text = $"{ainu}";
+                        _incorrectAnswerText.text = $"{ainu}";
+                        //正解の選択肢に単語を入れる
+                        _choises[_textCount].text = $"{ainu}";
+                        //選択肢に対して正解のフラグを設定する
+                        _choiseScript = _choises[_textCount].GetComponent<ChoiceScript>();
+                        _choiseScript.TrueSet();
+                        //選択肢の数をカウントアップ
+                        _textCount++;
+                    }
+                    //ダミー選択肢の設定
+                    else if (_dataCount == trapchoise && _trapWordCount < 3)
+                    {
+                        //ダミーの解答群
+                        _choises[_textCount].text = $"{ainu}";
+                        //ダミーの単語を再抽選
+                        trapchoise = Random.Range(trapchoise + 1, _maxDate);
+                        //選択肢に対して不正解のフラグを設定する
+                        _choiseScript = _choises[_textCount].GetComponent<ChoiceScript>();
+                        _choiseScript.FalseSet();
+                        //選択肢のカウントとダミー選択肢のカウントを+１
+                        _textCount++;
+                        _trapWordCount++;
+                    }
+                }
+                break;
+                #endregion
         }
         #endregion
     }
+
+    #region 出題モードを切り替える
+    public void JapaneseMode()
+    {        
+            //現在のモードが「アイヌ語」だったら「日本語」に切り替える
+                mode = Mode.Japanese;              
+   }
+    public void AinuMode()
+    {        
+            //現在のモードが「アイヌ語」だったら「日本語」に切り替える
+                mode = Mode.Ainu;              
+   }
+    #endregion
 }
