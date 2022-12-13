@@ -10,6 +10,7 @@ public class Answer : MonoBehaviour
     //解答のスクリプト
 
     //正解の選択肢か否かのフラグ
+    [SerializeField]
     private bool isAnswer = false;
     //非表示にするUIを格納する配列
     private GameObject[] _Uis = new GameObject[1];
@@ -81,5 +82,9 @@ public class Answer : MonoBehaviour
     {
         this.isAnswer = isAnswer;
         return;
+    }
+    public void ResetBool()
+    {
+        isAnswer = false;
     }
 }

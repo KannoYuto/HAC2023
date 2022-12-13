@@ -13,7 +13,7 @@ public class Timer : MonoBehaviour
     private Answer _answer = default;
     private bool isCount = false;
     [SerializeField, Header("タイマーのfillを入れる")]
-    private GameObject _fill = default;
+    private Image _fill = default;
     [SerializeField]
     private AppController _appController = default;
     private int _mode = default;
@@ -21,10 +21,10 @@ public class Timer : MonoBehaviour
     private void Awake()
     {
         _answer = GameObject.FindWithTag("AnswerUI").GetComponent<Answer>();
+        _appController = GameObject.FindWithTag("AppController").GetComponent<AppController>();
     }
     public void TimerStart()
     {
-        _fill.gameObject.GetComponent<Image>().color = Color.white;
         isCount = true;
         _slider = this.GetComponent<Slider>();
         _slider.maxValue = _maxTime;
@@ -49,14 +49,18 @@ public class Timer : MonoBehaviour
                 //制限時間を止める
                 TimerStop();
             }
-            //if(_slider.value <= _maxTime/2)
-            //{
-            //    _fill.gameObject.GetComponent<Image>().color -= new Color32(0, 1, 1, 0);
-            //}
-            //else
-            //{
-            //    _fill.gameObject.GetComponent<Image>().color = Color.white;
-            //}
+            if (_slider.value <= _maxTime / 4)
+            {
+                _fill.color = new Color32(255, 0, 0, 255);
+            }
+            else if (_slider.value <= _maxTime / 2)
+            {
+                _fill.color = new Color32(255, 220, 60, 255);
+            }
+            else
+            {
+                _fill.color = new Color32(25, 191, 108, 255);
+            }
         }
     }
 

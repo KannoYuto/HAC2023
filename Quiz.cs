@@ -17,20 +17,24 @@ public class Quiz : MonoBehaviour
     private Text _incorrectAnswerText = default;
     [SerializeField, Header("クイズの問題数の最大値を入力")]
     private int _quizMax = 0;
-    [SerializeField, Header("クイズ用のデータの行をカウントする変数(変更不要)")]
+    [SerializeField, Header("クイズ用のデータの行を自動でカウント")]
     private int _dataCount = 0;
     [SerializeField, Header("クイズで使用するデータの最大値を入れる")]
     private int _maxDate = default;
     [SerializeField, Header("解答群が自動で入る")]
     private Text[] _choises = new Text[4]; 
     [SerializeField, Header("正解の番号が自動で入る")]
-    private int[] _answer = default;
+    private int[] _answerNumber = default;
     [SerializeField, Header("第〇問を表示するテキストを入れる")]
     private Text _countText = default;
     [SerializeField, Header("タイマーを入れる")]
     private Timer _timer = default;
     [SerializeField, Header("リザルトのテキストが自動で入る")]
     private Result _result = default;
+    [SerializeField, Header("ヒントボタンを入れる")]
+    private GameObject _hint = default; 
+    [SerializeField, Header("解答ボタンを入れる")]
+    private Answer _answer = default;
     //回答群の数
     private int _textCount = 0;
     //ダミーの数
@@ -43,14 +47,19 @@ public class Quiz : MonoBehaviour
     private DataTable _dataTable = default;
     //非表示にするUIを格納する配列
     private GameObject[] _Uis = new GameObject[1];
+    //正解の配列番号を格納する
+    private int _incorrectAnswerNumber = default;
+    //ヒント発動時に消す選択肢の番号を格納する
+    private int _hintNumber = default;
 
-    public enum Mode
+    private enum Mode
     {
         Ainu,
         Japanese
     }
     [SerializeField, Header("モード")]
     private Mode mode = default;
+
     private void Awake()
     {
         //データベースを引っ張り出す
@@ -78,11 +87,78 @@ public class Quiz : MonoBehaviour
         _result = GameObject.FindWithTag("EndText").GetComponent<Result>();
         //配列に選択肢のテキストを格納する
         GameObject[] choise = GameObject.FindGameObjectsWithTag("ChoiseText");
-        _answer = new int[_quizMax];
+        _answerNumber = new int[_quizMax];
         for (int i = 0; i < choise.Length; i++)
         {
             _choises[i] = choise[i].GetComponent<Text>();
         }
+
+        //最初にクイズ出題処理を呼び出す
+        QuizReStart();
+    }
+
+    //問題数のカウントから始める出題処理(出題処理中にやり直しても問題数を増やさない用)
+    public void QuizReStart()
+    {
+        #region 出題時に一度だけする処理
+        //何問めかのカウントをアップ
+        _quizCount++;
+        #region 問題数が最大値までに達した時の処理
+        if (_quizCount > _quizMax)
+        {
+            _quizText.text = "";
+            _quizCount = 0;
+            //問題数を表示を初期化
+            _countText.text = "第" + $"{_quizCount}" + "問";
+            for (int i = 0; i < _choises.Length; i++)
+            {
+                _choises[i].text = "";
+            }
+            for (int i = 0; i < _answerNumber.Length; i++)
+            {
+                _answerNumber[i] = 0;
+            }
+            //終了のUIを見えなくする処理
+            for (int i = 0; i < _Uis.Length; i++)
+            {
+                _Uis[i] = GameObject.FindGameObjectWithTag("EndText").transform.parent.gameObject;
+
+                foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+                {
+                    if (child.gameObject.GetComponent<Image>())
+                    {
+                        child.gameObject.GetComponent<Image>().enabled = true;
+                    }
+                    else if (child.gameObject.GetComponent<Text>())
+                    {
+                        child.gameObject.GetComponent<Text>().enabled = true;
+                    }
+                }
+            }
+            _result.ResultText();
+            return;
+        }
+        #endregion
+
+        //問題数を表示
+        _countText.text = "第" + $"{_quizCount}" + "問";
+        #endregion
+
+        #region 選択肢をシャッフルする処理
+        //選択肢の配列の長さを数値として格納
+        int choisesLength = _choises.Length;
+        while (choisesLength > 1)
+        {
+            //カウントを減らす
+            choisesLength--;
+            //入れ替える選択肢を選ぶ
+            int changeChoises = Random.Range(0, choisesLength);
+            //選択肢を入れ替える
+            Text change = _choises[changeChoises];
+            _choises[changeChoises] = _choises[choisesLength];
+            _choises[choisesLength] = change;
+        }
+        #endregion
 
         #region 正解・不正解・終了のUIを非表示
         //正解のUIを見えなくする処理
@@ -136,77 +212,51 @@ public class Quiz : MonoBehaviour
                 }
             }
         }
-        #endregion
-
-        //最初にクイズ出題処理を呼び出す
-        QuizReStart();
-    }
-
-    //問題数のカウントから始める出題処理(出題処理中にやり直しても問題数を増やさない用)
-    public void QuizReStart()
-    {
-        //何問めかのカウントをアップ
-        _quizCount++;
-        #region 問題数が最大値までに達した時の処理
-        if (_quizCount > _quizMax)
+        for (int i = 0; i < _Uis.Length; i++)
         {
-            _quizText.text = "";
-            _quizCount = 0;
-            //問題数を表示を初期化
-            _countText.text = "第" + $"{_quizCount}" + "問";
-            for (int i = 0; i < _choises.Length; i++)
-            {
-                _choises[i].text = "";
-            }
-            for (int i = 0; i < _answer.Length; i++)
-            {
-                _answer[i] = 0;
-            }
-            //終了のUIを見えなくする処理
-            for (int i = 0; i < _Uis.Length; i++)
-            {
-                _Uis[i] = GameObject.FindGameObjectWithTag("EndText").transform.parent.gameObject;
+            _Uis[i] = _hint;
 
-                foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>())
+            {
+                if (child.gameObject.GetComponent<Image>())
                 {
-                    if (child.gameObject.GetComponent<Image>())
-                    {
-                        child.gameObject.GetComponent<Image>().enabled = true;
-                    }
-                    else if (child.gameObject.GetComponent<Text>())
-                    {
-                        child.gameObject.GetComponent<Text>().enabled = true;
-                    }
+                    child.gameObject.GetComponent<Image>().enabled = true;
+                }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled = true;
                 }
             }
-            _result.ResultText();
-            return;
         }
         #endregion
-
-        //問題数を表示
-        _countText.text = "第" + $"{_quizCount}" + "問";
-        QuizStart();
+        QuizSet();
     }
     //クイズの出題処理
-    public void QuizStart()
+    public void QuizSet()
     {        
         //タイマーのカウントを開始
         _timer.TimerStart();
+        _answer.ResetBool();
         //初期化
         _textCount = 0;
         _dataCount = 0;
         _trapWordCount = 0;
         //出題する単語を選択
         int correctAnswerWord = Random.Range(1, _maxDate);
+        //もしも選ばれた単語がもう一度選ばれたらやり直す
         for(int i = 0; i< _quizCount-1; i++)
         {
-            if(_answer[i]==correctAnswerWord)
+            if(_answerNumber[i]==correctAnswerWord)
             {
-                QuizStart();
+                QuizSet();
             }
         }
-        _answer[_quizCount - 1] = correctAnswerWord;
+        //ヒントによる処理を元に戻す
+        for (int i = 0; i < _choises.Length; i++)
+        {
+            _choises[i].transform.parent.gameObject.GetComponent<Button>().interactable = true;
+        }
+        _answerNumber[_quizCount - 1] = correctAnswerWord;
         //ダミーの単語を選択
         int trapchoise = Random.Range(1, _maxDate);
         #region 再抽選
@@ -214,22 +264,6 @@ public class Quiz : MonoBehaviour
         if (correctAnswerWord == trapchoise)
         {
             trapchoise = Random.Range(correctAnswerWord + 1, _maxDate);
-        }
-        #endregion
-
-        #region 選択肢をシャッフルする処理
-        //選択肢の配列の長さを数値として格納
-        int choisesLength = _choises.Length;
-        while (choisesLength > 1)
-        {
-            //カウントを減らす
-            choisesLength--;
-            //入れ替える選択肢を選ぶ
-            int changeChoises = Random.Range(0, choisesLength);
-            //選択肢を入れ替える
-            Text change = _choises[changeChoises];
-            _choises[changeChoises] = _choises[choisesLength];
-            _choises[choisesLength] = change;
         }
         #endregion
 
@@ -250,7 +284,7 @@ public class Quiz : MonoBehaviour
                     //もしも途中で単語の番号が最大値になったらやり直し
                     if (trapchoise == _maxDate || correctAnswerWord == _maxDate)
                     {
-                        QuizStart();
+                        QuizSet();
                     }
 
                     //カウントアップ
@@ -258,6 +292,8 @@ public class Quiz : MonoBehaviour
                     //問題と正解を表示する処理
                     if (_dataCount == correctAnswerWord)
                     {
+                        //答えの配列番号を格納
+                        _incorrectAnswerNumber = _textCount;
                         //出題単語を表示
                         _quizText.text = $"{ainu}";
                         //解答に表示する答えを設定
@@ -303,7 +339,7 @@ public class Quiz : MonoBehaviour
                     //もしも途中で単語の番号が最大値になったらやり直し
                     if (trapchoise == _maxDate || correctAnswerWord == _maxDate)
                     {
-                        QuizStart();
+                        QuizSet();
                     }
 
                     //カウントアップ
@@ -311,6 +347,8 @@ public class Quiz : MonoBehaviour
                     //問題と正解を表示する処理
                     if (_dataCount == correctAnswerWord)
                     {
+                        //答えの配列番号を格納
+                        _incorrectAnswerNumber = _textCount;
                         //出題単語を表示
                         _quizText.text = $"{japanese}";
                         //解答に表示する答えを設定
@@ -356,5 +394,40 @@ public class Quiz : MonoBehaviour
             //現在のモードが「アイヌ語」だったら「日本語」に切り替える
                 mode = Mode.Ainu;              
    }
+    #endregion
+
+    #region ヒントの処理
+    public void hint()
+    {
+        //答えの番号格納
+        _hintNumber = _incorrectAnswerNumber;
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = _hint;
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>())
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled = false;
+                }
+            }
+        }
+        //非表示にする選択肢を選ぶ(2個)
+        for (int i = 0; i< 2; i++)
+        {
+            _hintNumber++;
+            if (_hintNumber > 3)
+            {
+                _hintNumber = 1;
+            }
+            
+            _choises[_hintNumber].transform.parent.gameObject.GetComponent<Button>().interactable = false;
+        }  
+    }
     #endregion
 }

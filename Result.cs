@@ -13,6 +13,10 @@ public class Result : MonoBehaviour
     private int _subtractScore = 0;
     [SerializeField, Header("最後に正解数を表示するテキストが自動で入る")]
     private Text text = default;
+    [SerializeField, Header("最後に表示するランクを入力(上から順に高得点)")]
+    private string[] _rankText = default;
+    [SerializeField, Header("ランク分けの基準となる数値を入れる(上から順に高得点のライン)")]
+    private int[] _rankBorder = default;
     public void CorrectAnswerAdd()
     {
         _score += _addScore;
@@ -24,7 +28,26 @@ public class Result : MonoBehaviour
     public void ResultText()
     {
         text = this.GetComponent<Text>();
-        text.text = "正解数は" + $"{_score}" + "問!";
+        //最高ランク
+        if(_score >= _rankBorder[0])
+        {
+            text.text = $"{_score}" + "問正解!\n" + $"{_rankText[0]}";
+        }
+        //2番目
+        else if (_score >= _rankBorder[1])
+        {
+            text.text = $"{_score}" + "問正解!\n" + $"{_rankText[1]}";
+        }
+        //3番目
+        else if (_score >= _rankBorder[2])
+        {
+            text.text = $"{_score}" + "問正解!\n" + $"{_rankText[2]}";
+        }
+        //4番目
+        else
+        {
+            text.text = $"{_score}" + "問正解!\n" + $"{_rankText[3]}";
+        }
     }
     public void ResetCount()
     {
