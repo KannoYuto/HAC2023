@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
-
+using TMPro;
 
 public class Answer : MonoBehaviour
 {
@@ -38,9 +38,9 @@ public class Answer : MonoBehaviour
                     {
                         child.gameObject.GetComponent<Image>().enabled = true;
                     }
-                    else if (child.gameObject.GetComponent<Text>())
+                    else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                     {
-                        child.gameObject.GetComponent<Text>().enabled = true;
+                        child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
                     }
                 }
             }
@@ -66,9 +66,9 @@ public class Answer : MonoBehaviour
                     {
                         child.gameObject.GetComponent<Image>().enabled = true;
                     }
-                    else if (child.gameObject.GetComponent<Text>())
+                    else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                     {
-                        child.gameObject.GetComponent<Text>().enabled = true;
+                        child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
                     }
                 }
             }

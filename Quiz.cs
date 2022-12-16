@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using TMPro;
 
 public class Quiz : MonoBehaviour
 
@@ -10,11 +11,11 @@ public class Quiz : MonoBehaviour
     //使用するデータベース
     private const string CONST_DATA = "ainu_DB_ALL.db";
     [SerializeField, Header("問題用のテキストが自動で入る")]
-    private Text _quizText = default;
+    private TextMeshProUGUI _quizText = default;
     [SerializeField, Header("正解のテキストが自動で入る")]
-    private Text _correctAnswerText = default;
+    private TextMeshProUGUI _correctAnswerText = default;
     [SerializeField, Header("不正解のテキストが自動で入る")]
-    private Text _incorrectAnswerText = default;
+    private TextMeshProUGUI _incorrectAnswerText = default;
     [SerializeField, Header("クイズの問題数の最大値を入力")]
     private int _quizMax = 0;
     [SerializeField, Header("クイズ用のデータの行を自動でカウント")]
@@ -22,11 +23,11 @@ public class Quiz : MonoBehaviour
     [SerializeField, Header("クイズで使用するデータの最大値を入れる")]
     private int _maxDate = default;
     [SerializeField, Header("解答群が自動で入る")]
-    private Text[] _choises = new Text[4]; 
+    private TextMeshProUGUI[] _choises = new TextMeshProUGUI[4]; 
     [SerializeField, Header("正解の番号が自動で入る")]
     private int[] _answerNumber = default;
     [SerializeField, Header("第〇問を表示するテキストを入れる")]
-    private Text _countText = default;
+    private TextMeshProUGUI _countText = default;
     [SerializeField, Header("タイマーを入れる")]
     private Timer _timer = default;
     [SerializeField, Header("リザルトのテキストが自動で入る")]
@@ -34,7 +35,7 @@ public class Quiz : MonoBehaviour
     [SerializeField, Header("ヒントボタンを入れる")]
     private GameObject _hint = default; 
     [SerializeField, Header("解答ボタンを入れる")]
-    private Answer _answer = default;
+    private Answer _answer = default; 
     //回答群の数
     private int _textCount = 0;
     //ダミーの数
@@ -78,22 +79,26 @@ public class Quiz : MonoBehaviour
             "AND Affiliation is NULL GROUP by Japanese");
 
         //問題のテキストを取得
-        _quizText = this.GetComponent<Text>();
+        _quizText = this.GetComponent<TextMeshProUGUI>();
         //正解のテキストを取得
-        _correctAnswerText = GameObject.FindWithTag("CorrectAnswerText").GetComponent<Text>();
+        _correctAnswerText = GameObject.FindWithTag("CorrectAnswerText").GetComponent<TextMeshProUGUI>();
         //不正解のテキストを取得
-        _incorrectAnswerText = GameObject.FindWithTag("IncorrectAnswerText").GetComponent<Text>();
+        _incorrectAnswerText = GameObject.FindWithTag("IncorrectAnswerText").GetComponent<TextMeshProUGUI>();
         //リザルトのテキストを取得
         _result = GameObject.FindWithTag("EndText").GetComponent<Result>();
+        //正解の番号を入れる配列の長さを出題数と同じにする
+        _answerNumber = new int[_quizMax];
         //配列に選択肢のテキストを格納する
         GameObject[] choise = GameObject.FindGameObjectsWithTag("ChoiseText");
-        _answerNumber = new int[_quizMax];
         for (int i = 0; i < choise.Length; i++)
         {
-            _choises[i] = choise[i].GetComponent<Text>();
+            _choises[i] = choise[i].GetComponent<TextMeshProUGUI>();
         }
+    }
 
-        //最初にクイズ出題処理を呼び出す
+    public void QuizReset()
+    {
+        _quizCount = 0;
         QuizReStart();
     }
 
@@ -118,6 +123,40 @@ public class Quiz : MonoBehaviour
             {
                 _answerNumber[i] = 0;
             }
+            //正解のUIを見えなくする処理
+            for (int i = 0; i < _Uis.Length; i++)
+            {
+                _Uis[i] = GameObject.FindGameObjectWithTag("CorrectAnswerText").transform.parent.gameObject;
+
+                foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+                {
+                    if (child.gameObject.GetComponent<Image>())
+                    {
+                        child.gameObject.GetComponent<Image>().enabled = false;
+                    }
+                    else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                    {
+                        child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                    }
+                }
+            }
+            //不正解のUIを見えなくする処理
+            for (int i = 0; i < _Uis.Length; i++)
+            {
+                _Uis[i] = GameObject.FindGameObjectWithTag("IncorrectAnswerText").transform.parent.gameObject;
+
+                foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+                {
+                    if (child.gameObject.GetComponent<Image>())
+                    {
+                        child.gameObject.GetComponent<Image>().enabled = false;
+                    }
+                    else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                    {
+                        child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                    }
+                }
+            }
             //終了のUIを見えなくする処理
             for (int i = 0; i < _Uis.Length; i++)
             {
@@ -129,9 +168,9 @@ public class Quiz : MonoBehaviour
                     {
                         child.gameObject.GetComponent<Image>().enabled = true;
                     }
-                    else if (child.gameObject.GetComponent<Text>())
+                    else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                     {
-                        child.gameObject.GetComponent<Text>().enabled = true;
+                        child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
                     }
                 }
             }
@@ -154,7 +193,7 @@ public class Quiz : MonoBehaviour
             //入れ替える選択肢を選ぶ
             int changeChoises = Random.Range(0, choisesLength);
             //選択肢を入れ替える
-            Text change = _choises[changeChoises];
+            TextMeshProUGUI change = _choises[changeChoises];
             _choises[changeChoises] = _choises[choisesLength];
             _choises[choisesLength] = change;
         }
@@ -172,9 +211,9 @@ public class Quiz : MonoBehaviour
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
-                else if (child.gameObject.GetComponent<Text>())
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
-                    child.gameObject.GetComponent<Text>().enabled = false;
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
                 }
             }
         }
@@ -189,9 +228,9 @@ public class Quiz : MonoBehaviour
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
-                else if (child.gameObject.GetComponent<Text>())
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
-                    child.gameObject.GetComponent<Text>().enabled = false;
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
                 }
             }
         }
@@ -206,9 +245,9 @@ public class Quiz : MonoBehaviour
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
-                else if (child.gameObject.GetComponent<Text>())
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
-                    child.gameObject.GetComponent<Text>().enabled = false;
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
                 }
             }
         }
@@ -222,9 +261,9 @@ public class Quiz : MonoBehaviour
                 {
                     child.gameObject.GetComponent<Image>().enabled = true;
                 }
-                else if (child.gameObject.GetComponent<Text>())
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
-                    child.gameObject.GetComponent<Text>().enabled = true;
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
                 }
             }
         }
@@ -385,15 +424,120 @@ public class Quiz : MonoBehaviour
 
     #region 出題モードを切り替える
     public void JapaneseMode()
-    {        
-            //現在のモードが「アイヌ語」だったら「日本語」に切り替える
-                mode = Mode.Japanese;              
-   }
+    {
+        //最初にクイズのタイトルを非表示(髙橋)
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("QuizTitle");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }
+            }
+        }
+
+        //最初にクイズのタイトルを非表示(髙橋)
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("QuizUI");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = true;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
+                }
+            }
+        }
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("SearchConfirmation").transform.parent.gameObject;
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }
+            }
+        }
+        mode = Mode.Japanese;  
+        _hint.gameObject.GetComponent<Image>().enabled = true;
+        QuizReStart();
+    }
     public void AinuMode()
-    {        
-            //現在のモードが「アイヌ語」だったら「日本語」に切り替える
-                mode = Mode.Ainu;              
-   }
+    {
+        //最初にクイズのタイトルを非表示(髙橋)
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("QuizTitle");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }
+            }
+        }
+
+        //最初にクイズのタイトルを非表示(髙橋)
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("QuizUI");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = true;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
+                }
+            }
+        }
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("SearchConfirmation").transform.parent.gameObject;
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }
+            }
+        }
+
+        mode = Mode.Ainu;
+        _hint.gameObject.GetComponent<Image>().enabled = true;
+        QuizReStart();
+    }
     #endregion
 
     #region ヒントの処理
@@ -411,9 +555,9 @@ public class Quiz : MonoBehaviour
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
-                else if (child.gameObject.GetComponent<Text>())
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
-                    child.gameObject.GetComponent<Text>().enabled = false;
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
                 }
             }
         }
@@ -430,4 +574,5 @@ public class Quiz : MonoBehaviour
         }  
     }
     #endregion
+
 }

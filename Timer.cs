@@ -64,7 +64,7 @@ public class Timer : MonoBehaviour
         }
     }
 
-    private void TimerStop()
+    public void TimerStop()
     {
         //制限時間を止める
         isCount = false;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class Result : MonoBehaviour
 {
@@ -11,11 +12,9 @@ public class Result : MonoBehaviour
     private int _addScore = 0;
     [SerializeField,Header("不正解時に減算するスコアの数値")]
     private int _subtractScore = 0;
-    [SerializeField, Header("最後に正解数を表示するテキストが自動で入る")]
-    private Text text = default;
     [SerializeField, Header("最後に表示するランクを入力(上から順に高得点)")]
     private string[] _rankText = default;
-    [SerializeField, Header("ランク分けの基準となる数値を入れる(上から順に高得点のライン)")]
+    [SerializeField, Header("ランク分けの基準となる数値を入れる(上から順に高ランクのライン)")]
     private int[] _rankBorder = default;
     public void CorrectAnswerAdd()
     {
@@ -27,26 +26,25 @@ public class Result : MonoBehaviour
     }
     public void ResultText()
     {
-        text = this.GetComponent<Text>();
         //最高ランク
         if(_score >= _rankBorder[0])
         {
-            text.text = $"{_score}" + "問正解!\n" + $"{_rankText[0]}";
+            this.GetComponent<TextMeshProUGUI>().text = $"{_score}" + "問正解!\n" + $"{_rankText[0]}";
         }
         //2番目
         else if (_score >= _rankBorder[1])
         {
-            text.text = $"{_score}" + "問正解!\n" + $"{_rankText[1]}";
+            this.GetComponent<TextMeshProUGUI>().text = $"{_score}" + "問正解!\n" + $"{_rankText[1]}";
         }
         //3番目
         else if (_score >= _rankBorder[2])
         {
-            text.text = $"{_score}" + "問正解!\n" + $"{_rankText[2]}";
+            this.GetComponent<TextMeshProUGUI>().text = $"{_score}" + "問正解!\n" + $"{_rankText[2]}";
         }
         //4番目
         else
         {
-            text.text = $"{_score}" + "問正解!\n" + $"{_rankText[3]}";
+            this.GetComponent<TextMeshProUGUI>().text = $"{_score}" + "問正解!\n" + $"{_rankText[3]}";
         }
     }
     public void ResetCount()

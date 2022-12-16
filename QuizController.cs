@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Linq;
+using TMPro;
 
 public class QuizController : MonoBehaviour
 {
@@ -21,14 +22,11 @@ public class QuizController : MonoBehaviour
     //非表示にするUIを格納する配列
     private GameObject[] _Uis = new GameObject[1];
 
-    [SerializeField]
-    private Image _answerButton = default;
-
     private void Awake()
     {
         //クイズのスクリプトを取得
-        _quiz = GameObject.Find("Question_Text").GetComponent<Quiz>();
-        _result = GameObject.Find("EndText").GetComponent<Result>();
+        _quiz = GameObject.FindGameObjectWithTag("QuestionText").GetComponent<Quiz>();
+        _result = GameObject.FindGameObjectWithTag("EndText").GetComponent<Result>();
         //配列に選択肢を格納する
         GameObject[] choise = GameObject.FindGameObjectsWithTag("ChoiseUi");
 
@@ -72,12 +70,12 @@ public class QuizController : MonoBehaviour
     #endregion
 
     #region クイズを最初から始める時の処理(リザルトのボタンで使用する)
-    public void ReStart()
+    public void Reset()
     {
         //リザルトのUIを見えなくする処理
         for (int i = 0; i < _Uis.Length; i++)
         {
-            _Uis[i] = GameObject.FindGameObjectWithTag("EndText").transform.parent.gameObject;
+            _Uis[i] = GameObject.FindGameObjectWithTag("SearchConfirmation").transform.parent.gameObject;
 
             foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
             {
@@ -85,21 +83,76 @@ public class QuizController : MonoBehaviour
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
-                else if (child.gameObject.GetComponent<Text>())
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
-                    child.gameObject.GetComponent<Text>().enabled = false;
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }
+            }
+        }
+        //最初にクイズのタイトルを非表示(髙橋)
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("QuizTitle");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = true;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
+                }
+            }
+        }
+
+        //最初にクイズのタイトルを非表示(髙橋)
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("QuizUI");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }
+            }
+        }
+        //正解数をリセット
+        _result.ResetCount();
+    }
+    #endregion
+
+    //モード変更時にクイズ機能を初期化
+    public void ReStart()
+    {
+        //リザルトのUIを見えなくする処理
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = _result.transform.parent.gameObject;
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
                 }
             }
         }
         //正解数をリセット
         _result.ResetCount();
         //再出題
-        _quiz.QuizReStart();
-    }
-    #endregion
-    public Image AnswerButton()
-    {
-        return _answerButton;
+        _quiz.QuizReset();
     }
 
     public void QuizInitialization()
@@ -114,9 +167,9 @@ public class QuizController : MonoBehaviour
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
-                else if (child.gameObject.GetComponent<Text>())
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
-                    child.gameObject.GetComponent<Text>().enabled = false;
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
                 }
             }
         }
@@ -131,9 +184,9 @@ public class QuizController : MonoBehaviour
                 {
                     child.gameObject.GetComponent<Image>().enabled = false;
                 }
-                else if (child.gameObject.GetComponent<Text>())
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
-                    child.gameObject.GetComponent<Text>().enabled = false;
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
                 }
             }
         }
