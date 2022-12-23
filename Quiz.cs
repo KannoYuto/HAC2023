@@ -478,7 +478,7 @@ public class Quiz : MonoBehaviour
         }
         mode = Mode.Japanese;  
         _hint.gameObject.GetComponent<Image>().enabled = true;
-        QuizReStart();
+        QuizReset();
     }
     public void AinuMode()
     {
@@ -536,7 +536,7 @@ public class Quiz : MonoBehaviour
 
         mode = Mode.Ainu;
         _hint.gameObject.GetComponent<Image>().enabled = true;
-        QuizReStart();
+        QuizReset();
     }
     #endregion
 

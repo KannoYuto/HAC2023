@@ -86,6 +86,10 @@ public class AppController : MonoBehaviour
             {
                 child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
             }
+            else if (child.gameObject.GetComponent<Text>())
+            {
+                child.gameObject.GetComponent<Text>().enabled = true;
+            }
             else
             {
                 continue;
@@ -104,6 +108,10 @@ public class AppController : MonoBehaviour
             else if (child.gameObject.GetComponent<TextMeshProUGUI>())
             {
                 child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+            }
+            else if (child.gameObject.GetComponent<Text>())
+            {
+                child.gameObject.GetComponent<Text>().enabled = false;
             }
             else
             {
@@ -156,6 +164,10 @@ public class AppController : MonoBehaviour
                 else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                 {
                     child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled = false;
                 }
             }
         }
@@ -210,6 +222,10 @@ public class AppController : MonoBehaviour
                 {
                     child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
                 }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled = true;
+                }
             }
         }
 
@@ -234,6 +250,10 @@ public class AppController : MonoBehaviour
                 {
                     child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
                 }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled = false;
+                }
             }
         }
         #endregion
@@ -257,6 +277,10 @@ public class AppController : MonoBehaviour
                     else if (child.gameObject.GetComponent<TextMeshProUGUI>())
                     {
                         child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
+                    }
+                    else if (child.gameObject.GetComponent<Text>())
+                    {
+                        child.gameObject.GetComponent<Text>().enabled = true;
                     }
                 }
             }
@@ -286,6 +310,7 @@ public class AppController : MonoBehaviour
                 }
             }
         }
+        
         //画面を切り替えたらクイズ機能を初期化
         this.gameObject.GetComponent<QuizController>().ReStart();
         _mode = Mode.Others;
@@ -294,6 +319,71 @@ public class AppController : MonoBehaviour
         ChildsNonDisplay(_uIByFunctions[1], _uIByFunctions[1].GetComponentsInChildren<Transform>());
         ChildsDisplay(_uIByFunctions[2], _uIByFunctions[2].GetComponentsInChildren<Transform>());
         _timer.TimerStop();
+
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("IinstitutionUI");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }                
+            }
+        }
+    }
+    public void IinstitutionProcess()
+    {
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("OthersUI");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled = false;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = false;
+                }
+            }
+        }
+        for (int i = 0; i < _Uis.Length; i++)
+        {
+            _Uis[i] = GameObject.FindGameObjectWithTag("IinstitutionUI");
+
+            foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>().Skip(1))
+            {
+                if (child.gameObject.GetComponent<Image>())
+                {
+                    child.gameObject.GetComponent<Image>().enabled = true;
+                }
+                else if (child.gameObject.GetComponent<Text>())
+                {
+                    child.gameObject.GetComponent<Text>().enabled =true;
+                }
+                else if (child.gameObject.GetComponent<TextMeshProUGUI>())
+                {
+                    child.gameObject.GetComponent<TextMeshProUGUI>().enabled = true;
+                }
+            }
+
+        }
     }
 
     public int CurrentMode()
