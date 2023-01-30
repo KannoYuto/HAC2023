@@ -8,26 +8,29 @@ public class Result : MonoBehaviour
 {
     [SerializeField]
     private int _score = 0;
-    [SerializeField,Header("正解時に加算するスコアの数値")]
-    private int _addScore = 0;
-    [SerializeField,Header("不正解時に減算するスコアの数値")]
-    private int _subtractScore = 0;
     [SerializeField, Header("最後に表示するランクを入力(上から順に高得点)")]
     private string[] _rankText = default;
     [SerializeField, Header("ランク分けの基準となる数値を入れる(上から順に高ランクのライン)")]
     private int[] _rankBorder = default;
+    private Quiz _quiz = default;
+
+    private void Awake()
+    {
+        _quiz = GameObject.FindWithTag("QuestionText").GetComponent<Quiz>();
+    }
+    //正解時の加算処理
     public void CorrectAnswerAdd()
     {
-        _score += _addScore;
+        _score ++;
     }
+    //不正解時の減算処理
     public void IncorrectAnswerAdd()
     {
-        _score += _subtractScore;
     }
     public void ResultText()
     {
         //最高ランク
-        if(_score >= _rankBorder[0])
+        if (_score >= _rankBorder[0])
         {
             this.GetComponent<TextMeshProUGUI>().text = $"{_score}" + "問正解!\n" + $"{_rankText[0]}";
         }
@@ -49,6 +52,7 @@ public class Result : MonoBehaviour
     }
     public void ResetCount()
     {
+        _quiz.Reset();
         _score = 0;
     }
 }

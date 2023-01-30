@@ -7,16 +7,14 @@ public class Timer : MonoBehaviour
 {
     private Slider _slider = default;
     [SerializeField,Header("制限時間の最大値")]
-    private float _maxTime = 30;
+    private float _maxTime = default;
     private float _nowTime = default;
     [SerializeField, Header("クイズのスクリプト")]
     private Answer _answer = default;
     private bool isCount = false;
     [SerializeField, Header("タイマーのfillを入れる")]
     private Image _fill = default;
-    [SerializeField]
     private AppController _appController = default;
-    private int _mode = default;
 
     private void Awake()
     {
@@ -34,9 +32,12 @@ public class Timer : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        _mode = _appController.CurrentMode();
+        if(_appController.CurrentMode() != 1)
+        {
+            return;
+        }
         //制限時間が有効な状態かどうか
-        if (isCount && _mode == 1)
+        if (isCount && _appController.CurrentMode() == 1)
         {
             //制限時間を減らしていく
             _nowTime -= Time.deltaTime;
@@ -68,5 +69,14 @@ public class Timer : MonoBehaviour
     {
         //制限時間を止める
         isCount = false;
+    }
+
+    public  int NowTime()
+    {
+        return (int)_nowTime;
+    }
+    public float NowTime2()
+    {
+        return (float)_nowTime;
     }
 }

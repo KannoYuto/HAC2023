@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ChoiceScript : MonoBehaviour
 {
@@ -17,7 +18,6 @@ public class ChoiceScript : MonoBehaviour
     //『解答』のスクリプト
     [SerializeField, Header("解答のスクリプトが自動で入る")]
     private Answer _answer = default;
-
     private void Awake()
     {
         //解答のオブジェクトを取得
@@ -34,7 +34,7 @@ public class ChoiceScript : MonoBehaviour
         //選択肢が選択されたら『解答』ボタンを表示
         _answerUI.GetComponent<Image>().enabled = true;
         //選択された答えが正解か否かのフラグを設定
-        _answer.SetBool(isAnswer); 
+        _answer.SetBool(isAnswer);
     }
 
     //選択肢に対して正誤をセット
