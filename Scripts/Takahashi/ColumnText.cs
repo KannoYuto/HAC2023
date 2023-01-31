@@ -38,7 +38,7 @@ public class ColumnText : MonoBehaviour
     {       
         foreach (DataRow row in _dataTable.Rows)
         {
-            
+            //コラム一覧にある単語をタップしたとき、その単語と一致する単語を探す
             if (_eventSystem.currentSelectedGameObject.GetComponentInChildren<TextMeshProUGUI>().text == $"{row["Ainu"]}")
             {
                 //アイヌ語を格納
@@ -49,12 +49,17 @@ public class ColumnText : MonoBehaviour
                 string columnJapanese = $"{row["Japanese"]}";
                 //単語の読み方を格納
                 string columnRead = $"{row["Pronunciation"]}";
+                //日本語読みをTextに入れる
                 _columnJapaneseText.text = "【" + $"{columnJapanese}"+ "】";
+                //アイヌ語をTextに入れる
                 _columnNameText.text = $"{ainu}";
+                //読み方をTextに入れる
                 _columnReadText.text = $"{columnRead}";
+                //コラムの内容をTextに入れる
                 _columnText.text = $"{columnText}";
             }
         }
+        //コラム一覧を一度すべて非表示
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = GameObject.FindGameObjectWithTag("ColumnText").transform.parent.gameObject;
@@ -76,6 +81,7 @@ public class ColumnText : MonoBehaviour
             }
 
         }
+        //コラムの画像を表示
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = GameObject.FindGameObjectWithTag("ColumnText");

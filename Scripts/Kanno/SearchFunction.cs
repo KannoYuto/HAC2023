@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using NMeCab.Specialized;
 using TMPro;
 /// <summary>
 /// 検索機能
@@ -18,10 +15,9 @@ public class SearchFunction : MonoBehaviour
     //アイヌ語、日本語問い合わせ
     private const string LANGUAGE_QUERY = "SELECT ColumnID,Ainu,Japanese,Reading FROM Language";
 
+    //検索結果区分
     private const string EXACT_MATCH = "完全一致";
-
     private const string PARTIALLY_CONSISTENT = "部分一致";
-
     private const string NONE_RESULT = "該当なし";
 
     //区切り文字(string型)
@@ -31,7 +27,7 @@ public class SearchFunction : MonoBehaviour
     private const char DELIMITER_CHAR = '、';
     #endregion
 
-    #region コンポーネント
+    #region フィールド変数
     [SerializeField, Header("文字入力部")]
     private TMP_InputField _iF = default;
 
@@ -58,9 +54,7 @@ public class SearchFunction : MonoBehaviour
 
     [SerializeField, Header("コラムの内容を表示するテキストを入れる")]
     private TextMeshProUGUI _columnText = default;
-    #endregion
 
-    #region フィールド変数
     //データベース格納用変数
     private SqliteDatabase _ainuDataBase = default;
 
@@ -79,8 +73,8 @@ public class SearchFunction : MonoBehaviour
     [SerializeField, Header("現在のページ数")]
     private int _nowPage = default;
 
+    //レコードを格納するリスト
     private List<SearchResults> _similaritySearchResults = new List<SearchResults>();
-
     private List<SearchResults> _exactMatch = new List<SearchResults>();
 
     [SerializeField, Header("キーボードを格納")]
@@ -108,32 +102,6 @@ public class SearchFunction : MonoBehaviour
     }
     #endregion
 
-    //private string MorphologicalAnalysis(string word)
-    //{
-    //    string dicDir = @"Assets/NMeCab-0.10.2/dic/ipadic";
-
-    //    string hiragana = null;
-
-    //    List<string> analysisWords = new List<string>();
-
-    //    using (MeCabIpaDicTagger tagger = MeCabIpaDicTagger.Create(dicDir))
-    //    {
-    //        MeCabIpaDicNode[] nodes = tagger.Parse(word);
-
-    //        foreach (MeCabIpaDicNode item in nodes)
-    //        {
-    //            analysisWords.Add(item.Reading);
-    //        }
-    //    }
-
-    //    foreach (string reading in analysisWords)
-    //    {
-    //        hiragana = String.Concat(hiragana, reading);
-    //    }
-
-    //    return hiragana;
-    //}
-
     #region 検索
     /// <summary>
     /// 入力された内容をもとにデータテーブル内から検索する
@@ -146,8 +114,10 @@ public class SearchFunction : MonoBehaviour
             return;
         }
 
+        //特殊入力キーボードの非表示
         KeyBoardNonDisplay();
 
+        //入力部を非表示にし、出力部を表示する。
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = GameObject.FindGameObjectWithTag("SearchInput");
@@ -182,7 +152,7 @@ public class SearchFunction : MonoBehaviour
             }
         }
 
-        //類似検索結果格納用リスト
+        //検索ワードと部分一致するレコードを格納するリスト
         List<SearchResults> similaritySearchResults = new List<SearchResults>();
 
         //検索ワードを含むレコードを抽出
@@ -268,7 +238,7 @@ public class SearchFunction : MonoBehaviour
                     {
                         foreach (string item in similaritySearchResults[i].Japanese.Split(DELIMITER_CHAR))
                         {
-                            if (item == _iF.text/* || MorphologicalAnalysis(item).ToHiragana() == _iF.text.ToHiragana()*/)
+                            if (item == _iF.text)
                             {
                                 exactMatch.Add(similaritySearchResults[i]);
                                 similaritySearchResults.RemoveAt(i);
@@ -296,31 +266,49 @@ public class SearchFunction : MonoBehaviour
             }
         }
 
+        //現在のページ数を初期化
         _nowPage = 0;
+
+        //完全一致結果を表示
         _resultText.text = EXACT_MATCH;
+
+        //矢印の初期化
         _leftArrow.enabled = false;
         _rightArrow.enabled = true;
+
+        //それぞれの検索結果をリストに格納
         _similaritySearchResults = similaritySearchResults;
         _exactMatch = exactMatch;
 
+        //検索結果がなかった場合
         if (_similaritySearchResults.Count == 0 && _exactMatch.Count == 0)
         {
+            //該当なしと表示
             _resultText.text = NONE_RESULT;
+
+            //矢印を非表示に
             _leftArrow.enabled = false;
             _rightArrow.enabled = false;
 
+            //テキストとコラムボタンを非表示にする
             foreach (TextMeshProUGUI text in _texts)
             {
                 text.text = "";
             }
 
-            foreach(Transform button in _buttons)
+            foreach (Transform button in _buttons)
             {
                 button.GetComponent<Image>().enabled = false;
             }
         }
+
+        //完全一致が存在する場合
         else
         {
+            /*
+             * 検索結果をテキストとして出力する
+             * コラムが存在する場合はコラムボタンを表示する
+             */
             for (int k = 0; k < _texts.Length; k++)
             {
                 if (k < _exactMatch.Count)
@@ -368,35 +356,6 @@ public class SearchFunction : MonoBehaviour
                 }
             }
         }
-
-        /*
-         * 検索結果をテキストとして出力する
-         * 検索結果を１、２...と連番で表示する
-         * 検索結果が無かった時は該当なしと表示する
-         */
-        //_text.text = "\n" + "完全一致" + "\n";
-
-        //for (int k = 0; k < exactMatch.Count; k++)
-        //{
-        //    _text.text = String.Concat(_text.text, $"{k + 1}", ". ", exactMatch[k].Ainu, " : ", exactMatch[k].Japanese, "\n");
-        //}
-
-        //if (exactMatch.Count == 0)
-        //{
-        //    _text.text = String.Concat(_text.text, "該当なし", "\n");
-        //}
-
-        //_text.text = String.Concat(_text.text, "", "\n", "部分一致", "\n");
-
-        //for (int l = 0; l < similaritySearchResults.Count; l++)
-        //{
-        //    _text.text = String.Concat(_text.text, $"{l + 1}", ". ", similaritySearchResults[l].Ainu, " : ", similaritySearchResults[l].Japanese, "\n");
-        //}
-
-        //if (similaritySearchResults.Count == 0)
-        //{
-        //    _text.text = String.Concat(_text.text, "該当なし", "\n");
-        //}
     }
     #endregion
 
@@ -409,6 +368,9 @@ public class SearchFunction : MonoBehaviour
         return (int)_searchMode;
     }
 
+    /// <summary>
+    /// キーボードの表示、非表示を切り替える
+    /// </summary>
     public void KeyBoardOnDisplay()
     {
         if (_keyBoard.gameObject.activeSelf)
@@ -422,12 +384,18 @@ public class SearchFunction : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 特殊入力キーボードを非表示にする
+    /// </summary>
     public void KeyBoardNonDisplay()
     {
         _keyBoard.gameObject.SetActive(false);
         _iF.interactable = true;
     }
 
+    /// <summary>
+    /// 入力部から一文字消去する
+    /// </summary>
     public void Delete()
     {
         if (_iF.text.Length != 0)
@@ -436,6 +404,9 @@ public class SearchFunction : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 入力部に空白を追加
+    /// </summary>
     public void Space()
     {
         _iF.text = String.Concat(_iF.text, "　");
@@ -457,12 +428,17 @@ public class SearchFunction : MonoBehaviour
         _searchMode = SearchMode.AinuToJapanese;
     }
 
+    /// <summary>
+    /// 検索結果出力画面から入力画面に戻る
+    /// </summary>
     public void SearchBack()
     {
         _iF.text = "";
 
+        //入力画面を表示する
         for (int i = 0; i < _Uis.Length; i++)
         {
+            //入力画面を取得
             _Uis[i] = GameObject.FindGameObjectWithTag("SearchInput");
 
             foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>())
@@ -477,8 +453,10 @@ public class SearchFunction : MonoBehaviour
                 }
             }
         }
+        //検索結果出力画面を非表示にする
         for (int i = 0; i < _Uis.Length; i++)
         {
+            //検索結果出力画面を取得
             _Uis[i] = GameObject.FindGameObjectWithTag("SearchOutput");
 
             foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>())
@@ -493,6 +471,7 @@ public class SearchFunction : MonoBehaviour
                 }
             }
         }
+        //現在の検索モードを取得し、モードに合わせて画像を表示する
         switch (this.GetCurrentMode())
         {
             case 0:
@@ -511,8 +490,16 @@ public class SearchFunction : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// ページを右送りする
+    /// </summary>
     public void RightArrow()
     {
+        /*
+         * 次のページに検索結果が存在していたら、次のページを表示し、
+         * コラムが存在していたら、コラムボタンを表示し、
+         * 検索結果がなかったら何もしない
+         */
         if (4 * (_nowPage + 1) - 4 < _similaritySearchResults.Count)
         {
             _nowPage++;
@@ -661,6 +648,11 @@ public class SearchFunction : MonoBehaviour
         }
     }
 
+    /*
+     * 前のページに検索結果が存在していたら、前のページを表示し、
+     * コラムが存在していたら、コラムボタンを表示し、
+     * 検索結果がなかったら何もしない
+     */
     public void LeftArrow()
     {
         if (_nowPage > 0)
@@ -801,6 +793,10 @@ public class SearchFunction : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// コラムに表示する内容の取得
+    /// </summary>
+    /// <param name="id">コラムID</param>
     public void ColumnOpen(string id)
     {
         DataTable columnTable = _ainuDataBase.ExecuteQuery($"SELECT * FROM Column WHERE ColumnID = '{id}'");
@@ -838,6 +834,10 @@ public class SearchFunction : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// コラムを非表示にする処理
+    /// </summary>
     public void ColumnClose()
     {
         //コラムボタンがないほうの再出題ボタンを表示
@@ -859,16 +859,26 @@ public class SearchFunction : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 現在のページ数を返す
+    /// </summary>
+    /// <returns>現在のページ数</returns>
     public int NowPage()
     {
         return _nowPage;
     }
 
+    /// <summary>
+    /// 入力不可にする
+    /// </summary>
     public void InputOff()
     {
         _iF.interactable = false;
     }
 
+    /// <summary>
+    /// 入力可能にする
+    /// </summary>
     public void InputOn()
     {
         _iF.interactable = true;

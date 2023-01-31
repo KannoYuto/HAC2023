@@ -18,14 +18,20 @@ public class Timer : MonoBehaviour
 
     private void Awake()
     {
+        //回答ボタンのスクリプトを取得
         _answer = GameObject.FindWithTag("AnswerUI").GetComponent<Answer>();
+        //アプリコントローラーからスクリプトを取得
         _appController = GameObject.FindWithTag("AppController").GetComponent<AppController>();
     }
     public void TimerStart()
     {
+        //タイマーを稼働させる
         isCount = true;
+        //スライダーを取得
         _slider = this.GetComponent<Slider>();
+        //スライダーの数値を初期化
         _slider.maxValue = _maxTime;
+        //スライダーのゲージを初期化
         _nowTime = _maxTime;
         _slider.value = _maxTime;
     }
@@ -50,14 +56,17 @@ public class Timer : MonoBehaviour
                 //制限時間を止める
                 TimerStop();
             }
+            //制限時間が1/4になったらゲージの色を赤くする
             if (_slider.value <= _maxTime / 4)
             {
                 _fill.color = new Color32(255, 0, 0, 255);
             }
+            //制限時間が1/4になったらゲージの色を黄色くする
             else if (_slider.value <= _maxTime / 2)
             {
                 _fill.color = new Color32(255, 220, 60, 255);
             }
+            //元の色にする
             else
             {
                 _fill.color = new Color32(25, 191, 108, 255);
@@ -69,14 +78,5 @@ public class Timer : MonoBehaviour
     {
         //制限時間を止める
         isCount = false;
-    }
-
-    public  int NowTime()
-    {
-        return (int)_nowTime;
-    }
-    public float NowTime2()
-    {
-        return (float)_nowTime;
     }
 }

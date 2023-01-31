@@ -24,19 +24,24 @@ public class QuizController : MonoBehaviour
     [SerializeField, Header("コラムボタンがない方の再出題ボタンを入れる")]
     private GameObject _reQuizButtonSingle = default;
 
+    #region 初期処理
     private void Awake()
     {
         //クイズのスクリプトを取得
         _quiz = GameObject.FindGameObjectWithTag("QuestionText").GetComponent<Quiz>();
+        //結果画面のスクリプトを取得
         _result = GameObject.FindGameObjectWithTag("EndText").GetComponent<Result>();
         //配列に選択肢を格納する
         GameObject[] choise = GameObject.FindGameObjectsWithTag("ChoiseUi");
 
+        //選択肢を配列に格納
         for (int i = 0; i < choise.Length; i++)
         {
             _choise[i] = choise[i].gameObject;
         }
     }
+    #endregion
+
     #region 選択肢の色変える
     public void ColorChange()
     {
@@ -66,9 +71,8 @@ public class QuizController : MonoBehaviour
     {
         for (int i = 0; i < _Uis.Length; i++)
         {
-            //このタグのオブジェクトの親オブジェクトを取得
+            //クイズ画面のコラムボタンを取得し、非表示にする
             _Uis[i] = GameObject.FindGameObjectWithTag("ColumnButton");
-            //親を除く、子のオブジェクトのイメージとテキストをすべて非表示
             foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>())
             {
                 if (child.gameObject.GetComponent<Image>())
@@ -81,11 +85,10 @@ public class QuizController : MonoBehaviour
                 }
             }
         }
-        //コラムボタンがないほうの再出題ボタンを表示
+        //コラムボタンがないほうの再出題ボタンを非表示
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = _reQuizButtonSingle;
-            //親を除く、子のオブジェクトのイメージとテキストをすべて非表示
             foreach (Transform child in _Uis[i].GetComponentsInChildren<Transform>())
             {
                 if (child.gameObject.GetComponent<Image>())
@@ -103,10 +106,10 @@ public class QuizController : MonoBehaviour
     }
     #endregion
 
-    #region クイズを最初から始める時の処理(リザルトのボタンで使用する)
+    #region クイズを最初から始める時の処理(フッターのボタンで使用する)
     public void Reset()
     {
-        //リザルトのUIを見えなくする処理
+        //出題に必要ないUIを非表示にする
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = GameObject.FindGameObjectWithTag("SearchConfirmation").transform.parent.gameObject;
@@ -123,7 +126,7 @@ public class QuizController : MonoBehaviour
                 }
             }
         }
-        //最初にクイズのタイトルを非表示(髙橋)
+        //クイズのタイトルを表示
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = GameObject.FindGameObjectWithTag("QuizTitle");
@@ -141,7 +144,7 @@ public class QuizController : MonoBehaviour
             }
         }
 
-        //最初にクイズのタイトルを非表示(髙橋)
+        //最初にクイズのタイトルを非表示
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = GameObject.FindGameObjectWithTag("QuizUI");

@@ -93,7 +93,6 @@ public class Answer : MonoBehaviour
                     }
                 }
             }
-            _result.IncorrectAnswerAdd();
             //『解答』ボタンを非表示
             this.gameObject.GetComponent<Image>().enabled = false;
         }
@@ -190,8 +189,11 @@ public class Answer : MonoBehaviour
             }            
         }        
     }
+
+    //クイズのコラムボタンが押された時の処理
     public void QuizColumnClick()
     {
+        //コラムを表示
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = _column;
@@ -217,6 +219,7 @@ public class Answer : MonoBehaviour
 
     public void BackClick()
     {
+        //コラムを非表示
         for (int i = 0; i < _Uis.Length; i++)
         {
             _Uis[i] = _column;
@@ -238,11 +241,12 @@ public class Answer : MonoBehaviour
 
     public void SetBool(bool isAnswer)
     {
-        this.isAnswer = isAnswer;
-        return;
+        //選択された選択肢の正解の情報を取得
+        this.isAnswer = isAnswer;        
     }
     public void ResetBool()
     {
+        //正解の情報をリセット
         isAnswer = false;
     }
 }

@@ -11,6 +11,7 @@ public class IinstitutionReset : MonoBehaviour
 
     public void PositionReset()
     {
+        //スクロールの位置を元に戻す
         _content.transform.position = new Vector2(_content.transform.position.x, 0);
         _content2.transform.position = new Vector2(_content.transform.position.x, 0);
     }

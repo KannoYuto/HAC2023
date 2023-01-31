@@ -38,9 +38,9 @@ public class AppController : MonoBehaviour
     private Quiz _quiz = default;
     [SerializeField, Header("コラム一覧のColumnTextを入れる")]
     private GameObject _columnText = default;
-    [SerializeField, Header("クイズのColumnTextを入れる")]
+    [SerializeField, Header("検索のColumnTextを入れる")]
     private GameObject _searchColumnText = default;
-    [SerializeField, Header("クイズのColumnTextを入れる")]
+    [SerializeField, Header("検索のScroll Viewを入れる")]
     private GameObject _searchUI = default;
 
     [SerializeField, Header("検索機能")]
